@@ -1,0 +1,584 @@
+﻿'USEUNIT COMMON
+'USEUNIT ESTACK
+'USEUNIT KERNEL
+
+Dim Start
+
+Set Start = New NCS
+
+class NCS
+
+  private PanelIndex
+	private obj
+	private dt
+	private envi331
+	private envi332
+  private envi341
+  private envi342
+  public url
+  
+  public Function getInstance
+		set getInstance = new Class_NCA2
+	end Function 
+
+	Public sub msj
+        Log.Message "NCA"
+  end sub 
+    
+	Public Sub Class_Initialize
+		PanelIndex = 0
+		dt = false
+		enviroment
+	End Sub
+  
+  public sub CerrarNCA
+    	If Sys.WaitProcess("java").Exists then
+    		set p = Sys.Process("java")
+    	
+	    	if p.Exists then
+	    		p.Close()
+	    	end if
+	    	
+	    	Delay(499)
+	    	if p.Exists then
+	    		p.Terminate()
+	    	end if
+    	end if
+  end sub
+  
+  public sub Login(Key,Ambiente) 
+
+		FunctionAction = "Inicio de sesion en NCA Client"
+		FunctionValue = "-"
+		FunctionOutput = "-"
+		FunctionString = "-"
+
+		CerrarNCA
+		
+		Call TestedApps.start.Run
+      
+		Delay(10000)
+    '-- Maximize Window
+    Dim oShell : Set oShell = CreateObject("WScript.Shell")
+    oShell.SendKeys("% {DOWN}{DOWN}{DOWN}{DOWN}{ENTER}")   
+    
+    
+    if Ambiente = "norte" then
+		  v31 = envi331.Item(Key)
+		  v32 = envi332.Item(Key)
+      
+    elseif Ambiente = "sur" then
+      v31 = envi341.Item(Key)
+		  v32 = envi342.Item(Key)
+      
+    end if
+    
+		Logon(v31)
+		
+		Dim tmpObj
+		
+		For i=0 To 15
+			'Set tmpObj = TNT.Process("java").FindObject("JavaClassName:=JList,AWTComponentAccessibleName:=modules")
+      Set tmpObj= Sys.Process("java").SwingObject("NCAClient", "nca.client2 v1.0.6", 0).SwingObject("JRootPane", "", 0).SwingObject("null.layeredPane").SwingObject("null.contentPane").SwingObject("JScrollPane", "", 0).SwingObject("JViewport", "", 0).SwingObject("JTabbedPane", "", 0).SwingObject("SystemEventBrowserMDI", "", 0).SwingObject("JPanel", "", 0).SwingObject("JTabbedPane", "System Events", 0).SwingObject("JPanel", "", 0).SwingObject("JSplitPane", "", 0).SwingObject("JScrollPane", "", 0).SwingObject("JViewport", "", 0).SwingObject("JList", "Modules", 0)
+      Log.Message tmpObj.wItemCount
+			if (tmpObj.wItemCount = 0) then
+				delay(1000)
+			Else
+				Log.Message "Login Exitoso"
+        'exit for
+				exit Sub
+			end if
+		Next
+
+		Logon(v32)
+		
+		For i=0 To 15
+			Set tmpObj= Sys.Process("java").SwingObject("NCAClient", "nca.client2 v1.0.6", 0).SwingObject("JRootPane", "", 0).SwingObject("null.layeredPane").SwingObject("null.contentPane").SwingObject("JScrollPane", "", 0).SwingObject("JViewport", "", 0).SwingObject("JTabbedPane", "", 0).SwingObject("SystemEventBrowserMDI", "", 0).SwingObject("JPanel", "", 0).SwingObject("JTabbedPane", "System Events", 0).SwingObject("JPanel", "", 0).SwingObject("JSplitPane", "", 0).SwingObject("JScrollPane", "", 0).SwingObject("JViewport", "", 0).SwingObject("JList", "Modules", 0)
+
+			if (tmpObj.wItemCount = 0) then
+				delay(1000)
+			Else
+				Log.Message "Login Exitoso"
+        'exit for
+				exit Sub
+			end if
+			if i = 5 then
+				Log.Error "No se pudo conectar|No. de intentos : 2"
+			end if 
+		Next
+  end sub
+  
+  public sub Logon(envi)
+		
+		user = "ssuser"
+		password = "ssuser1"
+			
+  	Sys.Process("java").SwingObject("NCAClient", "nca.client2 v1.0.6", 0).SwingObject("JRootPane", "", 0).SwingObject("null.layeredPane").SwingObject("null.contentPane").SwingObject("JScrollPane", "", 0).SwingObject("JViewport", "", 0).SwingObject("JTabbedPane", "", 0).SwingObject("SystemEventBrowserMDI", "", 0).SwingObject("JPanel", "", 0).SwingObject("JToolBar", "", 0).SwingObject("JComboBox", "", 1).Click
+		Sys.Process("java").SwingObject("NCAClient", "nca.client2 v1.0.6", 0).SwingObject("JRootPane", "", 0).SwingObject("null.layeredPane").SwingObject("null.contentPane").SwingObject("JScrollPane", "", 0).SwingObject("JViewport", "", 0).SwingObject("JTabbedPane", "", 0).SwingObject("SystemEventBrowserMDI", "", 0).SwingObject("JPanel", "", 0).SwingObject("JToolBar", "", 0).SwingObject("JComboBox", "", 0).Click	
+		set list = TNT.Process("java").FindObject("AWTComponentName:=ComboBox.List")
+    'set list = Aliases.java.NCAClient.RootPane.null_layeredPane.SwingObject("JPanel", "", 0).SwingObject("ComboPopup.popup").SwingObject("ComboBox.scrollPane").SwingObject("JViewport", "", 0).SwingObject("ComboBox.list")
+
+  	set items = TNT.Process("java").FindObject("AWTComponentName:=ComboBox.List")
+    
+	  If (items.wItemCount > 0) Then
+  		For nroItems = 0 To items.wItemCount - 1 step 1                           
+  			service = items.wItem(nroItems)                  
+  			If (service = "<< " & envi & " >>") Then
+  				items.ClickItem "<< " & envi & " >>"
+  				'log.Message "Fue seleccionado el Módulo."
+  				Exit For
+  			Elseif (service = envi) Then 
+  				items.ClickItem envi
+  				'log.Message "Fue seleccionado el Módulo."   
+  				Exit for                                   
+  			End If
+  		Next
+	 Else
+		 log.Error "No fue seleccionado el Módulo."
+	 End If
+		
+	 Sys.Process("java").SwingObject("NCAClient", "nca.client2 v1.0.6", 0).SwingObject("JRootPane", "", 0).SwingObject("null.layeredPane").SwingObject("null.contentPane").SwingObject("JScrollPane", "", 0).SwingObject("JViewport", "", 0).SwingObject("JTabbedPane", "", 0).SwingObject("SystemEventBrowserMDI", "", 0).SwingObject("JPanel", "", 0).SwingObject("JToolBar", "", 0).SwingObject("JComboBox", "", 1).SwingObject("ComboBox.textField").Click
+	 Sys.Process("java").SwingObject("NCAClient", "nca.client2 v1.0.6", 0).SwingObject("JRootPane", "", 0).SwingObject("null.layeredPane").SwingObject("null.contentPane").SwingObject("JScrollPane", "", 0).SwingObject("JViewport", "", 0).SwingObject("JTabbedPane", "", 0).SwingObject("SystemEventBrowserMDI", "", 0).SwingObject("JPanel", "", 0).SwingObject("JToolBar", "", 0).SwingObject("JComboBox", "", 1).SwingObject("ComboBox.textField").setText user
+		
+	 Sys.Process("java").SwingObject("NCAClient", "nca.client2 v1.0.6", 0).SwingObject("JRootPane", "", 0).SwingObject("null.layeredPane").SwingObject("null.contentPane").SwingObject("JScrollPane", "", 0).SwingObject("JViewport", "", 0).SwingObject("JTabbedPane", "", 0).SwingObject("SystemEventBrowserMDI", "", 0).SwingObject("JPanel", "", 0).SwingObject("JToolBar", "", 0).SwingObject("JPasswordField", "", 0).Click
+	 Sys.Process("java").SwingObject("NCAClient", "nca.client2 v1.0.6", 0).SwingObject("JRootPane", "", 0).SwingObject("null.layeredPane").SwingObject("null.contentPane").SwingObject("JScrollPane", "", 0).SwingObject("JViewport", "", 0).SwingObject("JTabbedPane", "", 0).SwingObject("SystemEventBrowserMDI", "", 0).SwingObject("JPanel", "", 0).SwingObject("JToolBar", "", 0).SwingObject("JPasswordField", "", 0).setText ""
+	 Sys.Process("java").SwingObject("NCAClient", "nca.client2 v1.0.6", 0).SwingObject("JRootPane", "", 0).SwingObject("null.layeredPane").SwingObject("null.contentPane").SwingObject("JScrollPane", "", 0).SwingObject("JViewport", "", 0).SwingObject("JTabbedPane", "", 0).SwingObject("SystemEventBrowserMDI", "", 0).SwingObject("JPanel", "", 0).SwingObject("JToolBar", "", 0).SwingObject("JPasswordField", "", 0).setText password  
+		
+	 Sys.Process("java").SwingObject("NCAClient", "nca.client2 v1.0.6", 0).SwingObject("JRootPane", "", 0).SwingObject("null.layeredPane").SwingObject("null.contentPane").SwingObject("JScrollPane", "", 0).SwingObject("JViewport", "", 0).SwingObject("JTabbedPane", "", 0).SwingObject("SystemEventBrowserMDI", "", 0).SwingObject("JPanel", "", 0).SwingObject("JToolBar", "", 0).SwingObject("JButton", "", 1).Click
+  
+  end sub
+  
+  Public Sub SelectSystemEvent(strModule, strSystemEvent)
+
+		FunctionAction = "Navegacion hacia el system event"
+		FunctionValue = "-"
+		FunctionOutput = "-"
+		FunctionString = "-"
+
+		Dim tmpObj
+		
+		For i=0 To 5
+			Set tmpObj = Sys.Process("java").SwingObject("NCAClient", "nca.client2 v1.0.6", 0).SwingObject("JRootPane", "", 0).SwingObject("null.layeredPane").SwingObject("null.contentPane").SwingObject("JScrollPane", "", 0).SwingObject("JViewport", "", 0).SwingObject("JTabbedPane", "", 0).SwingObject("SystemEventBrowserMDI", "", 0).SwingObject("JPanel", "", 0).SwingObject("JTabbedPane", "System Events", 0).SwingObject("JPanel", "", 0).SwingObject("JSplitPane", "", 0).SwingObject("JScrollPane", "", 0).SwingObject("JViewport", "", 0).SwingObject("JList", "Modules", 0)
+
+			if (tmpObj.wItemCount = 0) then
+				delay(1000)
+			Else
+				exit For
+			end if
+		Next
+		
+		rowCount = tmpObj.wItemCount
+		
+		For i = 0 to rowCount -1
+			moduleText = tmpObj.wItem(i)
+			'Log.message "Texto del modulo: " & moduleText
+			If moduleText = strModule Then
+				tmpObj.ClickItem strModule
+				Exit For
+				'Log.error "[Error] Modulo no Encontrado, Modulo esperado: InterfazModule"
+			End If
+			If i = rowCount -1 Then
+				Log.Warning "[Error] Modulo no Encontrado, Modulo esperado: " & strModule
+				Exit For
+			End If
+		Next
+		
+		For i=0 To 5
+			Set tmpObj = Sys.Process("java").SwingObject("NCAClient", "nca.client2 v1.0.6", 0).SwingObject("JRootPane", "", 0).SwingObject("null.layeredPane").SwingObject("null.contentPane").SwingObject("JScrollPane", "", 0).SwingObject("JViewport", "", 0).SwingObject("JTabbedPane", "", 0).SwingObject("SystemEventBrowserMDI", "", 0).SwingObject("JPanel", "", 0).SwingObject("JTabbedPane", "System Events", 0).SwingObject("JPanel", "", 0).SwingObject("JSplitPane", "", 0).SwingObject("JScrollPane", "", 1).SwingObject("JViewport", "", 0).SwingObject("JList", "System Events", 0)
+		
+			if (tmpObj.wItemCount = 0) then
+				delay(1000)
+			Else
+				exit For
+			end if
+		Next
+
+		rowCount = tmpObj.wItemCount
+		'log.message rowCount
+		
+		For i = 0 to rowCount -1
+			moduleText = tmpObj.wItem(i)
+			'Log.message "Texto del System Event: " & moduleText
+			If moduleText = strSystemEvent Then
+				tmpObj.DblClickItem strSystemEvent
+				Exit For
+				'Log.error "[Error] System Event no Encontrado, System event esperado: AltaMaterialesPorCompra"
+			End If
+			
+			If i = rowCount -1 Then
+				Log.error "[Error] System Event no Encontrado, System event esperado: " & strSystemEvent
+				Exit For
+			End If		
+		Next
+		Delay(1000)
+	End Sub
+  
+  public sub clickUp
+
+		dim obj2
+		set obj2 = Sys.Process("java").SwingObject("NCAClient", "nca.client2 v1.0.6", 0).SwingObject("JRootPane", "", 0).SwingObject("null.layeredPane").SwingObject("null.contentPane").SwingObject("JScrollPane", "", 0).SwingObject("JViewport", "", 0).SwingObject("JTabbedPane", "", 0).SwingObject("SystemEventBrowserMDI", "", 0).SwingObject("JPanel", "", 0).SwingObject("JTabbedPane", "", 0).SwingObject("SystemEventExecutionTab", "", 0).SwingObject("JPanel", "", 1).SwingObject("JSplitPane", "", 0).AWTObject("SynthSplitPaneDivider", "", 0).SwingObject("SplitPaneDivider.leftOneTouchButton")
+		obj2.click
+
+  end sub 
+
+  public sub clickDown
+
+		dim obj2
+		set obj2 = Sys.Process("java").SwingObject("NCAClient", "nca.client2 v1.0.6", 0).SwingObject("JRootPane", "", 0).SwingObject("null.layeredPane").SwingObject("null.contentPane").SwingObject("JScrollPane", "", 0).SwingObject("JViewport", "", 0).SwingObject("JTabbedPane", "", 0).SwingObject("SystemEventBrowserMDI", "", 0).SwingObject("JPanel", "", 0).SwingObject("JTabbedPane", "", 0).SwingObject("SystemEventExecutionTab", "", 0).SwingObject("JPanel", "", 1).SwingObject("JSplitPane", "", 0).AWTObject("SynthSplitPaneDivider", "", 0).SwingObject("SplitPaneDivider.rightOneTouchButton")
+		obj2.click
+      
+  end sub
+  
+  private Function ParametersNode
+  		
+    Dim WND
+		set WND = TNT.Process("java").Node("JavaClassName:=SystemEventExecutionTab,AWTComponentIndex:=0").Node("JavaClassName:=JPanel,AWTComponentAccessibleName:=Parameters")
+
+		if WND is Nothing then
+			Log.Error "Error en el Node -> Parameters."
+		end if 
+
+		set ParametersNode = WND
+    
+  End Function
+  
+  public sub setDataTableI(Index)
+
+		PanelIndex = Index 
+
+		set obj = ParametersNode
+		set obj = obj.Node("JavaClassName:=JPanel,AWTComponentIndex:=" & PanelIndex)
+
+		if not (obj.WaitObject("JavaClassName:=DataTableUIComponent",300)) is Nothing then
+			set obj = obj.Node("JavaClassName:=DataTableUIComponent")
+			dt = True
+			Log.Message "DataTable en Panel: " & PanelIndex & "Indicado = [Exitoso]"
+		else
+			Log.Warning "DataTable en Panel: " & PanelIndex & "Indicado = [Error]"
+		end if
+    
+  end sub
+  
+  public sub setJTextFieldI(vTxt,Index)
+
+		FunctionAction = "Introducir un valor al campo de texto"
+		FunctionValue = vTxt
+		FunctionOutput = "-"
+		FunctionString = "-"
+		
+		dt = False
+		set obj = ParametersNode
+		
+		PanelIndex = Index			
+
+		set obj = obj.Node("JavaClassName:=JPanel,AWTComponentIndex:=" & PanelIndex)
+
+		if not (obj.WaitObject("JavaClassName:=JTextField",300)) is Nothing then
+			set obj = obj.FindObject("JavaClassName:=JTextField")
+			obj.setText vTxt
+			FunctionStatus = "[Exitoso]"
+		Else
+		
+			FunctionStatus "[Error]"
+			Log.Warning FunctionAction & ": " & FunctionStatus	
+
+		end if 
+
+		PanelIndex = PanelIndex + 1 
+    
+  end sub
+  
+  public Function getResultsI(Index)
+
+  		Dim results
+
+  		set results = CreateObject("Scripting.Dictionary")
+
+  		set WND = TNT.Process("java").Node("JavaClassName:=SystemEventExecutionTab,AWTComponentIndex:=0").Node("JavaClassName:=JPanel,AWTComponentAccessibleName:=Results")
+      
+      set WND = WND.Node("JavaClassName:=JPanel,AWTComponentIndex:=" & Index)
+      
+  		if not WND.WaitObject("JavaClassName:=JTable",300) is Nothing then
+  			set obj = WND.FindObject("JavaClassName:=JTable")
+  			For i=0 To obj.wColumnCount - 1
+
+  				column = obj.wColumn(i)
+  				value = obj.wValue(0,i)
+  				'Log.Message column
+  				results.Add column,value
+  			Next
+
+  			set getResultsI = results 
+  		end if 
+      
+  end Function
+  
+  public Function getJTextField(Index)
+
+  		FunctionAction = "Introducir un valor al campo de texto"
+  		FunctionValue = vTxt
+  		FunctionOutput = "-"
+  		FunctionString = "-"
+  		Dim str
+    
+  		dt = False
+  		set obj = ParametersNode
+		
+  		PanelIndex = Index			
+
+  		set obj = obj.Node("JavaClassName:=JPanel,AWTComponentIndex:=" & PanelIndex)
+
+  		if not (obj.WaitObject("JavaClassName:=JTextField",300)) is Nothing then
+  			set obj = obj.FindObject("JavaClassName:=JTextField")
+  			str = obj.getText
+  			FunctionStatus = "[Exitoso]"
+  		Else
+  			FunctionStatus "[Error]"
+  			Log.Warning FunctionAction & ": " & FunctionStatus	
+  		end if 
+
+  		PanelIndex = PanelIndex + 1 
+      getJTextField = str
+    
+  end Function
+  
+  '-- Click en fila / columna cualquiera
+  public sub ClickCellJTable(strColumn,strRow)
+      FunctionAction = "Click a la columna: " & strColumn
+			FunctionValue = strText
+			FunctionOutput = "-"
+			FunctionString = "-" 
+      
+      set Obj = Sys.Process("java").SwingObject("NCAClient", "nca.client2 v1.0.6", 0).SwingObject("JRootPane", "", 0).SwingObject("null.layeredPane").SwingObject("null.contentPane").SwingObject("JScrollPane", "", 0).SwingObject("JViewport", "", 0).SwingObject("JTabbedPane", "", 0).SwingObject("SystemEventBrowserMDI", "", 0).SwingObject("JPanel", "", 0).SwingObject("JTabbedPane", "", 0).SwingObject("SystemEventExecutionTab", "", 0).SwingObject("JPanel", "", 1).SwingObject("JSplitPane", "", 0).SwingObject("JScrollPane", "", 0).SwingObject("JViewport", "", 0).SwingObject("JPanel", "Parameters", 0).SwingObject("JPanel", "", 7).SwingObject("DataTableUIComponent", "", 0).SwingObject("JScrollPane", "", 0).SwingObject("JViewport", "", 0).SwingObject("JTable", "", 0)
+      Column = CInt(Obj.wColumnCount)
+      for i = 0 to Column
+      
+        if Obj.wColumn(i) = strColumn  Then
+          Obj.ClickCell strRow,strColumn
+          exit for
+        end if
+        
+        if i = Column then
+          Log.Error "La Columna:"&strColumn&" no se encontro"
+        end if   
+      next
+  end sub
+  
+  '-- strColumn := nombre de la columna / strRow:= Indice de fila de la columna / strText:= nuevo valor
+  public sub SetValueJTable(strColumn,strRow,strText)
+  
+      FunctionAction = "Agrega un valor a la columna: " & strColumn
+			FunctionValue = strText
+			FunctionOutput = "-"
+			FunctionString = "-" 
+      
+      set Obj = Sys.Process("java").SwingObject("NCAClient", "nca.client2 v1.0.6", 0).SwingObject("JRootPane", "", 0).SwingObject("null.layeredPane").SwingObject("null.contentPane").SwingObject("JScrollPane", "", 0).SwingObject("JViewport", "", 0).SwingObject("JTabbedPane", "", 0).SwingObject("SystemEventBrowserMDI", "", 0).SwingObject("JPanel", "", 0).SwingObject("JTabbedPane", "", 0).SwingObject("SystemEventExecutionTab", "", 0).SwingObject("JPanel", "", 1).SwingObject("JSplitPane", "", 0).SwingObject("JScrollPane", "", 0).SwingObject("JViewport", "", 0).SwingObject("JPanel", "Parameters", 0).SwingObject("JPanel", "", 7).SwingObject("DataTableUIComponent", "", 0).SwingObject("JScrollPane", "", 0).SwingObject("JViewport", "", 0).SwingObject("JTable", "", 0)
+      Column = CInt(Obj.wColumnCount)
+      for i = 0 to Column
+      
+        if Obj.wColumn(i) = strColumn  Then
+          Obj.ClickCell strRow,strColumn
+          Obj.wValue(strRow,strColumn) = strText
+          exit for
+        end if
+        
+        if i = Column then
+          Log.Error "La Columna:"&strColumn&" no se encontro"
+        end if   
+      next
+      
+  end sub
+  
+  public sub dt_setText(strColumn,strText,strRow)
+  
+		if dt then
+			FunctionAction = "Agrega un valor a la columna: " & strText
+			FunctionValue = strText
+			FunctionOutput = "-"
+			FunctionString = "-" 
+       
+			set obj2 = obj.Node("JavaClassName:=JScrollPane")
+
+			if not (obj2.WaitObject("JavaClassName:=JTable",300)) is Nothing then
+				set obj2 = obj2.FindObject("JavaClassName:=JTable")
+				
+				if obj2.wRowCount = 0 then Log.Error "No existen filas."
+				
+				'rowCount = obj2.wRowCount - 1
+				
+				columnCount = obj2.wColumnCount - 1
+
+				For i = 0 To obj2.wColumnCount
+
+					if obj2.wColumn(i) = strColumn then
+						'obj2.wValue(rowCount,strColumn).click
+						obj2.clickCell strRow,strColumn
+						obj2.wValue(strRow,strColumn) = strText
+
+						FunctionStatus = "[Exitoso]"
+						Log.Message FunctionAction & ": " & FunctionStatus
+						Exit Sub	
+					end if 
+
+					if i = columnCount then
+						FunctionStatus =  "DataTable: Columna no encontrada" 
+						Log.Warning FunctionStatus
+					end if 
+				next 
+				Log.Message FunctionAction & ": " & FunctionStatus
+			else
+				FunctionStatus = "[Error]"
+				Log.Warning FunctionAction & ": " & FunctionStatus
+			end if  				
+		end if
+  end sub
+  
+  public sub ejecutar
+
+		FunctionAction = "Se ejecuta y envia la informacion al servidor"
+		FunctionValue = "-"
+		FunctionOutput = "-"
+		FunctionString = "-"
+		
+		'TNT.Process("javaw").Node("JavaClassName:=SystemEventExecutionTab,AWTComponentIndex:=0").Node("JavaClassName:=JPanel,AWTComponentIndex:=0").setFocus
+
+		set WND = TNT.Process("java").Node("JavaClassName:=SystemEventExecutionTab,AWTComponentIndex:=0")
+		'set WND = WND.WaitNode("JavaClassName:=JToolBar",300)
+		
+		if not (WND.Node("JavaClassName:=JPanel,AWTComponentIndex:=0")) is Nothing then 
+			set obj2 = Sys.Process("java").SwingObject("NCAClient", "nca.client2 v1.0.6", 0).SwingObject("JRootPane", "", 0).SwingObject("null.layeredPane").SwingObject("null.contentPane").SwingObject("JScrollPane", "", 0).SwingObject("JViewport", "", 0).SwingObject("JTabbedPane", "", 0).SwingObject("SystemEventBrowserMDI", "", 0).SwingObject("JPanel", "", 0).SwingObject("JTabbedPane", "", 0).SwingObject("SystemEventExecutionTab", "", 0).SwingObject("JPanel", "", 0).SwingObject("JToolBar", "", 0).SwingObject("JButton", "", 3)
+			obj2.click
+			FunctionStatus = "[Exitoso]"
+			Log.Message FunctionAction & ": " & FunctionStatus 
+		end if
+		delay(1000)
+    
+  end sub
+  
+  public Function getResult 
+		dim txt : txt = "-"
+
+		set WND = TNT.Process("java").Node("JavaClassName:=SystemEventExecutionTab,AWTComponentIndex:=0").Node("JavaClassName:=JPanel,AWTComponentIndex:=1")
+		set WND = WND.Node("JavaClassName:=JToolBar,AWTComponentIndex:=1")
+
+		if not (WND.WaitObject("JavaClassName:=JLabel,AWTComponentIndex:=5",300)) is Nothing then
+			set obj2 = WND.FindObject("JavaClassName:=JLabel,AWTComponentIndex:=5")
+		
+			txt = obj2.AWTComponentAccessibleName
+		end if
+		getResult = txt 	
+    
+  end Function
+  
+  Public sub ParamsScroll(Value)
+  
+    if (Value < 0 and Value > 100 ) then
+			Log.Error "El valor es un porcentaje {0-100}" 
+		end if
+    
+    set Scroll = Sys.Process("java").SwingObject("NCAClient", "nca.client2 v1.0.6", 0).SwingObject("JRootPane", "", 0).SwingObject("null.layeredPane").SwingObject("null.contentPane").SwingObject("JScrollPane", "", 0).SwingObject("JViewport", "", 0).SwingObject("JTabbedPane", "", 0).SwingObject("SystemEventBrowserMDI", "", 0).SwingObject("JPanel", "", 0).SwingObject("JTabbedPane", "System Events", 0).SwingObject("SystemEventExecutionTab", "", 0).SwingObject("JPanel", "", 1).SwingObject("JSplitPane", "", 0).SwingObject("JScrollPane", "", 0).SwingObject("JScrollPane$ScrollBar", "", 0)
+    'set Scroll = Sys.Process("java").SwingObject("NCAClient", "nca.client2 v1.0.6", 0).SwingObject("JRootPane", "", 0).SwingObject("null.layeredPane").SwingObject("null.contentPane").SwingObject("JScrollPane", "", 0).SwingObject("JViewport", "", 0).SwingObject("JTabbedPane", "", 0).SwingObject("SystemEventBrowserMDI", "", 0).SwingObject("JPanel", "", 0).SwingObject("JTabbedPane", "", 0).SwingObject("SystemEventExecutionTab", "", 0).SwingObject("JPanel", "", 1).SwingObject("JSplitPane", "", 0).SwingObject("JScrollPane", "", 0).SwingObject("JScrollPane$ScrollBar", "", 0)
+    Dim SizeScroll: SizeScroll = 0
+    SizeScroll = Scroll.wMax - 445 '379 o 445 es la diferencia de wmax y wpos para obtener el max de Wpos
+    Log.Message "WPos:"&SizeScroll
+    Scroll.wPosition = SizeScroll * (value/100)
+    'Scroll.wPosition = 200 * (Value/100) posicion estatica
+    Log.Message "Posicion actual del Scroll:"&Scroll.wPosition
+      
+  end sub
+      
+  public sub LoadXML
+
+  		'Click en el boton para cargar XML'
+  		Delay(6000)
+  		Sys.Process("java").SwingObject("NCAClient", "nca.client2 v1.0.6", 0).SwingObject("JRootPane", "", 0).SwingObject("null.layeredPane").SwingObject("null.contentPane").SwingObject("JScrollPane", "", 0).SwingObject("JViewport", "", 0).SwingObject("JTabbedPane", "", 0).SwingObject("SystemEventBrowserMDI", "", 0).SwingObject("JPanel", "", 0).SwingObject("JTabbedPane", "", 0).SwingObject("SystemEventExecutionTab", "", 0).SwingObject("JPanel", "", 0).SwingObject("JToolBar", "", 0).SwingObject("JButton", "", 0).Click	
+    
+  		'Ingresar el url en el campo de texto del popUp'
+      
+  		Delay(1000)
+      '-- Español
+  		Sys.Process("java").SwingObject("JDialog", "Abrir", -1, 1).SwingObject("JRootPane", "", 0).SwingObject("null.layeredPane").SwingObject("null.contentPane").SwingObject("JFileChooser", "", 0).SwingObject("JPanel", "", 2).SwingObject("JPanel", "", 0).SwingObject("SynthFileChooserUIImpl$3", "Nombre de archivo:", 0).setText url
+      
+      '-- Ingles
+      'Sys.Process("java").SwingObject("JDialog", "Open", -1, 1).SwingObject("JRootPane", "", 0).SwingObject("null.layeredPane").SwingObject("null.contentPane").SwingObject("JFileChooser", "", 0).SwingObject("JPanel", "", 2).SwingObject("JPanel", "", 0).SwingObject("SynthFileChooserUIImpl$3", "File Name:", 0).setText url
+      
+  		'Click en boton abrir en PopUp'
+  		Delay(500)
+      
+      '-- Español
+  		Sys.Process("java").SwingObject("JDialog", "Abrir", -1, 1).SwingObject("JRootPane", "", 0).SwingObject("null.layeredPane").SwingObject("null.contentPane").SwingObject("JFileChooser", "", 0).SwingObject("JPanel", "", 2).SwingObject("JPanel", "", 2).SwingObject("SynthFileChooser.approveButton").Click
+      
+      '-- Ingles
+      'Sys.Process("java").SwingObject("JDialog", "Open", -1, 1).SwingObject("JRootPane", "", 0).SwingObject("null.layeredPane").SwingObject("null.contentPane").SwingObject("JFileChooser", "", 0).SwingObject("JPanel", "", 2).SwingObject("JPanel", "", 2).SwingObject("SynthFileChooser.approveButton").Click 
+  		
+      Delay(3000)
+  end sub
+  
+  public sub enviroment
+
+  		set envi331 = CreateObject("Scripting.Dictionary")
+
+  		envi331.Add "SER", "SER PIMex-303"
+  		envi331.Add "APT", "APT PIMex-303"	
+		  envi331.Add "LAB", "LAB PIMex-303"
+		  envi331.Add "UNI", "PRU PIMex-303"
+  		envi331.Add "RED", "RED PIMex-303"
+  		envi331.Add "OFA", "OFA PImex-303"
+  		envi331.Add "PRO", "PRO PIMex-303"
+      envi331.Add "LIN", "LIN PIMex-303"
+      envi331.Add "CIL", "CIL PIMex-303"
+      envi331.Add "CLD", "CLD PIMex-303"
+      envi331.Add "IYD", "IYD PIMex-303"
+      envi331.Add "SAP", "SAP PIMex-303"
+
+		set envi332 = CreateObject("Scripting.Dictionary")
+
+  		envi332.Add "SER", "SER PIMex-304"
+  		envi332.Add "APT", "APT PIMex-304"	
+		  envi332.Add "LAB", "LAB PIMex-304"
+		  envi332.Add "UNI", "PRU PIMex-304"
+  		envi332.Add "RED", "RED PIMex-304"
+  		envi332.Add "OFA", "OFA PImex-304"
+  		envi332.Add "PRO", "PRO PIMex-304"
+      envi332.Add "LIN", "LIN PIMex-304"
+      envi332.Add "CIL", "CIL PIMex-304"
+      envi332.Add "CLD", "CLD PIMex-304"
+      envi332.Add "IYD", "IYD PIMex-304"
+      envi332.Add "SAP", "SAP PIMex-304"
+    
+    set envi341 = CreateObject("Scripting.Dictionary")
+
+  		envi341.Add "SER", "SER PIArg-305"
+  		envi341.Add "APT", "APT PIArg-305"	
+		  envi341.Add "LAB", "LAB PIArg-305"
+		  envi341.Add "UNI", "PRU PIArg-305"
+  		envi341.Add "RED", "RED PIArg-305"
+  		envi341.Add "OFA", "OFA PIArg-305"
+  		envi341.Add "PRO", "PRO PIArg-305"
+      envi341.Add "LIN", "LIN PIArg-305"
+      envi341.Add "CIL", "CIL PIArg-305"
+      envi341.Add "CLD", "CLD PIArg-305"
+      envi341.Add "IYD", "IYD PIArg-305"
+      envi341.Add "SAP", "SAP PIArg-305"
+          
+    set envi342 = CreateObject("Scripting.Dictionary")
+
+  		envi342.Add "SER", "SER PIArg-306"
+  		envi342.Add "APT", "APT PIArg-306"	
+		  envi342.Add "LAB", "LAB PIArg-306"
+		  envi342.Add "UNI", "PRU PIArg-306"
+  		envi342.Add "RED", "RED PIArg-306"
+  		envi342.Add "OFA", "OFA PIArg-306"
+  		envi342.Add "PRO", "PRO PIArg-306"
+      envi342.Add "LIN", "LIN PIArg-306"
+      envi342.Add "CIL", "CIL PIArg-306"
+      envi342.Add "CLD", "CLD PIArg-306"
+      envi342.Add "IYD", "IYD PIArg-306"
+      envi342.Add "SAP", "SAP PIArg-306"
+      
+      Log.Message "Init_NCADictionary"
+      
+  	end sub
+  
+    
+end class

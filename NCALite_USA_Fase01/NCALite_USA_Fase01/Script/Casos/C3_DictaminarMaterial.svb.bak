@@ -1,0 +1,27 @@
+﻿'https://ncacloudpi.ternium.com/DictaminarMaterial
+'Quality -> despoticion
+
+'USEUNIT NCA_Comp
+'USEUNIT COMMON
+'USEUNIT JSON
+'USEUNIT ESTACK
+'USEUNIT NCALITE
+
+Sub ejecucion
+
+  Data.DataIn("H:\Documents\TestComplete 14 Projects\NCALite_USA_Fase01\NCALite_USA_Fase01\Script\DataTable\NCALite.xlsx")
+  Data.DataOut("H:\Documents\TestComplete 14 Projects\NCALite_USA_Fase01\NCALite_USA_Fase01\Script\DataTable\NCALite.xlsx")
+  Data.TestSetFlag = true
+  
+  NCA.ProcessBrowser = "chrome"
+  
+  NCA.DictminarMaterial()
+  
+End Sub
+
+Sub navegador
+  delay(9865)
+  set navegado = Sys.Browser("chrome").BrowserWindow(0)
+  navegado.Maximize
+  
+End Sub

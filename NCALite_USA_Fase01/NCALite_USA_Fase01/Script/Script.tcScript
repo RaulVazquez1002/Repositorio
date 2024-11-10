@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Root signature="{9252F941-DB23-4FCA-AA50-858B33BB4A19}" version="11.40">
+	<children>
+		<folder name="Casos">
+			<child name="C1_AltaMaterial" key="{014598A1-36F6-4462-8F53-AA18BFBDD641}" path="Casos\C1_AltaMaterial.svb" />
+			<child name="C2_RecepcionMaterial" key="{08C01511-6B69-4B07-8B30-1CECEA4C4E3F}" path="Casos\C2_RecepcionMaterial.svb" />
+			<child name="C4_AgregarDefectoMaterial" key="{A52C7262-9600-4A4A-8B4C-315BC6BEEC84}" path="Casos\C4_AgregarDefectoMaterial.svb" />
+			<child name="C3_ConsultaMaterial" key="{2A3092BB-08B0-4EA7-8424-26312BF92B81}" path="Casos\C3_ConsultaMaterial.svb" />
+			<child name="C5_DegradarMaterial" key="{FACB78F2-2615-4D2A-8271-5FCF89EC2F6A}" path="Casos\C5_DegradarMaterial.svb" />
+			<child name="C6_ConsultaMaterial" key="{5A8E5596-2D90-46BE-8ADC-4A4FCAB2FBED}" path="Casos\C6_ConsultaMaterial.svb" />
+			<child name="C7_SubirMaterial1erCalidad" key="{ED5A1AB3-A75F-4D3D-8724-1E82A4CD8CC4}" path="Casos\C7_SubirMaterial1erCalidad.svb" />
+			<child name="C8_RetenerMaterial" key="{C7F3B5E7-8F18-446C-BCA1-D4ACB7E69BA8}" path="Casos\C8_RetenerMaterial.svb" />
+			<child name="C9_AceptarMaterial" key="{A86F508E-F2A6-4F1A-BC4B-DE6B6CF03EAC}" path="Casos\C9_AceptarMaterial.svb" />
+			<child name="CD10_ConsultaMaterial" key="{3ED1F648-8D6F-4AD3-A67D-0BBC54033AE0}" path="Casos\CD10_ConsultaMaterial.svb" />
+		</folder>
+		<folder name="Librerias">
+			<child name="COMMON" key="{537626EB-374F-4644-AAEB-16A9F9A4E7C4}" path="Librerias\COMMON.svb" />
+			<child name="ESTACK" key="{350A83F1-3867-42B0-92FB-1BC355CA6434}" path="Librerias\ESTACK.svb" />
+			<child name="KERNEL" key="{02427F1C-AB56-434A-9C13-243B0117E459}" path="Librerias\KERNEL.svb" />
+			<child name="KEYWORD" key="{9877DE68-04D2-4B74-8D1A-8D15EBD3ED60}" path="Librerias\KEYWORD.svb" />
+			<child name="NCALITE" key="{3B973D59-3CFB-4C48-B7F1-5EC2AEACDF13}" path="Librerias\NCALITE.svb" />
+			<child name="TEDI" key="{228B40F5-176A-4AAD-A6F1-7C35C6293CCE}" path="Librerias\TEDI.svb" />
+		</folder>
+		<folder name="Componente">
+			<child name="NCA_Comp" key="{3F31CDE3-91D0-425F-8FA7-43EC5610F09A}" path="Componente\NCA_Comp.svb" />
+			<child name="JSON" key="{FEEC2C72-5673-442D-A60B-8B21B920D4BE}" path="Componente\JSON.svb" />
+		</folder>
+		<child name="Unit1" key="{819AA151-E290-43D6-8626-56E13BF46210}" path="Unit1.svb" />
+	</children>
+</Root>

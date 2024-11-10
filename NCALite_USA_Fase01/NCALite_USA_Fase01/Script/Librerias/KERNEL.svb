@@ -1,0 +1,254 @@
+﻿Dim TNT
+
+if not isobject(TNT) then
+  Set TNT = New Class_TNT
+end if
+
+Class Class_TNT
+
+  Dim FailScan
+  Dim vParentObj
+  
+  Public Property Let ParentObj(objItem)
+    Set vParentObj = objItem
+  End Property 
+  
+  Public Property Get pObj()
+    Set pObj = vParentObj
+  End Property
+  
+  '-------------------------
+  ' TNT.Process property gets the Process Element from the system
+  '-------------------------
+  Property Get Process(strProcess)
+    On Error Resume Next
+    Dim tmpObj
+    Set tmpObj = Sys.Process(strProcess)
+    If tmpObj Is Nothing Then
+      Log.Error "Process Not Found: " & strProcess
+      FailScan = True
+      Set Process = Nothing
+      Exit Property
+      
+	  ' this Class with the Process Element as current Node.
+    Else
+      Set tmpNode = New Class_TNT
+      tmpNode.ParentObj = tmpObj
+      Set Process = tmpNode
+    End If     
+  End Property
+  
+  ' Alias for the Window Element that takes only one argument
+  Property Get Window(strWindow)
+    Set Window = Node("Name:=Page(""" & strWindow & """)")
+  End Property
+  
+  ' Alias for the WPFObject Element that takes only one argument
+  Property Get WPFObject(strObject)
+   Set WPFObject = FindObject("Name:=WPFObject(""" & strObject & """)")
+  End Property
+  
+  ' Alias for the WinFormsObject Element that takes only one argument
+  Property Get WinFormsObject(strObject)
+    Set WinFormsObject = FindObject("Name:=WinFormsObject(""" & strObject & """)") 
+  End Property
+
+  ' Common Function fObj. Looks for objects taking an URI and converting to property/value arrays
+  Function fObj(objId)
+    On Error Resume Next
+  	Dim tmpObj
+  	Dim ByIndex : ByIndex = 0
+    Dim arraySize : arraySize = 0
+    Dim NameProperty : NameProperty = Array()
+    Dim ValueProperty : ValueProperty = Array()
+  
+    uriArray = split(objId,",")
+    For Each uriPair in uriArray
+      uri = split(uriPair,":=")
+      Select Case uri(0) 
+        Case "Index"
+          ByIndex = uri(1)
+        Case Else
+          ReDim Preserve NameProperty(UBound(NameProperty) + 1)
+          ReDim Preserve ValueProperty(UBound(ValueProperty) + 1)
+          NameProperty(arraySize) = uri(0)
+          ValueProperty(arraySize) = uri(1)
+          arraySize = arraySize + 1
+      End Select
+    Next
+    
+    Set tmpObj = vParentObj.FindAllChildren(NameProperty,ValueProperty,50)(ByIndex)
+	  
+  	If tmpObj Is Nothing Then
+  		Set fObj = Nothing
+  	Else
+  		Set fObj = tmpObj
+  	End If
+	
+  End Function
+  
+  '----------
+  ' TODO: Add Property Description
+  '----------
+  Public Property Get FindObject(objId)
+    On Error Resume Next
+    Dim tmpObj
+	  Set tmpObj = fObj(objId)
+    
+    If tmpObj Is Nothing Then
+      Log.Error "Object Not Found: " & objId
+      FailScan = True
+      FindObject = Nothing
+      Exit Property
+    Else
+      Set FindObject = tmpObj
+    End If
+  End Property
+  
+  '----------
+' TODO: Add Property Description
+'----------
+  Public Property Get Node(objId)
+    On Error Resume Next
+    Dim tmpObj
+    Dim tmpNode
+    
+    Set tmpObj = fObj(objId)
+    
+    If tmpObj Is Nothing Then
+      Log.Error "Node was not found: " & objId
+      FailScan = True
+      Node = Nothing
+      Exit Property
+    Else
+      Set tmpNode = New Class_TNT
+      tmpNode.ParentObj = tmpObj
+      
+      Set Node = tmpNode
+      
+    End If
+  End Property
+  
+  '----------
+  ' 
+  '----------
+  Public Property Get WaitObject(objId, waitSeconds)
+    On Error Resume Next
+    Dim tmpObj
+	
+  	For i = 1 To waitSeconds
+  		Set tmpObj = fObj(objId)
+  		If tmpObj Is Nothing Then
+  			delay(1000)
+  		Else
+  			Exit For
+  		End If
+  	Next
+    
+    If tmpObj Is Nothing Then
+      Log.Error "Timeout [" & waitSeconds & "] Object Not Found: " & objId
+      FailScan = True
+      WaitObject = Nothing
+      Exit Property
+    Else
+      Set WaitObject = tmpObj
+    End If
+    
+  End Property
+  
+    Public Property Get WaitNode(objId, waitSeconds)
+    On Error Resume Next
+    Dim tmpObj
+	
+  	For i = 1 To waitSeconds
+  		Set tmpObj = fObj(objId)
+  		If tmpObj Is Nothing Then
+  			delay(1000)
+  		Else
+        log.Message "encontrado: ",,,,Sys.Desktop.ActiveWindow
+  			Exit For
+  		End If
+  	Next
+    
+    If tmpObj Is Nothing Then
+      Log.Warning "Timeout [" & waitSeconds & "] Object Not Found: " & objId
+      FailScan = True
+      WaitNode = Nothing
+      Exit Property
+    Else
+      Set tmpNode = New Class_TNT
+      tmpNode.ParentObj = tmpObj
+      Set WaitNode = tmpNode
+    End If
+  End Property 
+  
+  '###########################################
+  
+  Public Property Get NodeExist(objId)
+    On Error Resume Next
+    Dim tmpObj
+    Dim tmpNode
+    
+    Set tmpObj = fObj(objId)
+    
+    If tmpObj Is Nothing Then
+      'Log.Warning "Node was not found: " & objId
+      FailScan = True
+      NodeExist = False
+      Exit Property
+    Else
+      Set tmpNode = New Class_TNT
+      tmpNode.ParentObj = tmpObj
+      'Log.Message "OK Node: " & tmpNode.pObj.Name
+      
+      NodeExist = True
+      
+    End If
+  End Property
+  
+  Public Property Get FindObjectExist(objId)
+    On Error Resume Next
+    Dim tmpObj
+	  Set tmpObj = fObj(objId)
+    
+    If tmpObj Is Nothing Then
+      'Log.Warning "Object Not Found: " & objId
+      FailScan = True
+      FindObjectExist = False
+      Exit Property
+    Else
+      'Log.Message "OK Object: " & tmpObj.Name
+      FindObjectExist = True
+    End If
+  End Property
+  
+  Public Property Get WaitObjExist(objId, waitSeconds)
+  
+        On Error Resume Next
+        Dim tmpObj
+    	
+      	For i = 1 To waitSeconds
+          Sys.Refresh
+      		Set tmpObj = fObj(objId)
+      		If tmpObj Is Nothing Then
+      			delay(1001)
+      		Else
+      			Exit For
+      		End If
+      	Next
+        
+        If tmpObj Is Nothing Then
+            'Log.Warning "Timeout [" & waitSeconds & "] Object Not Found: " & objId
+            'FailScan = True
+            WaitObjExist = False
+            Exit Property
+        Else
+            'Set tmpNode = New Class_TNT
+            'tmpNode.ParentObj = tmpObj
+            'Set WaitNode = tmpNode
+            WaitObjExist = True
+        End If
+    End Property
+  
+   
+End Class

@@ -1,0 +1,705 @@
+﻿'USEUNIT KERNEL
+'USEUNIT COMMON
+dim Brower
+
+if not IsObject(Brower) Then
+  set Browser = new Swagger
+end If
+
+class Swagger 
+
+  Private IeTab 'posicionar ventana actual web 
+  Private pageIe 'posicionar TNT.Process actual navegador
+  public BrowserProcess 'proceso navegador
+  public BtBrower 'navegador a utilizar
+  public Page 'Pagina actual NativeWeb
+  public Max 'maximizar
+  public Min 'Minimizar
+  public BrowsersExists
+  
+  
+  '--------------------------------- Interación con el navegador-------------------------------------------------
+  public sub Cerrar
+  
+    dim isClosed 
+    On Error Resume Next
+    set ie = sys.FindChild("ProcessName",BrowserProcess)
+    
+    while ie.Exists
+      ie.close
+      isClosed = ie.WaitProperty("Exists", False)
+      if not isClosed then
+        'ie.terminate
+        ie.close
+      end if
+      set ie = sys.FindChild("ProcessName",BrowserProcess)
+    Wend
+  
+  end sub
+  
+  public sub MaximizeScreen()
+  
+    set BrowsersExists = Sys.Browser(BrowserProcess)
+    
+    if not BrowsersExists.Exists then
+      log.Error "[Error]: Navegador no iniciado"
+    Else
+      log.Message "Maximizar pantalla...."
+      set Max = BrowsersExists.BrowserWindow(0)
+      Max.Maximize 
+    end if
+      
+  end sub
+  
+  '---------------------------------------------------Swagger-------------------------------------------------------
+  public sub SignIn()
+  
+    Delay(9876)
+    NodeTab "https://ncalite-pi.ternium.net/#/admin/docs"
+    
+    
+    ClickObjFind "idStr","account-menu"
+    ClickObjFind "contentText","Iniciar sesión"
+    
+    SetTextObjFind "ObjectIdentifier","username", "admin"
+    SetTextObjFind "ObjectIdentifier","password" ,"admin"
+    
+    ClickObjFind "ObjectLabel","Iniciar sesión"
+    Delay(9876)
+     
+              
+  end sub
+  
+  public sub Login(Page,SubPage)
+  
+    Cerrar
+    
+    call TestedApps.chrome.Run
+    Delay(30000)
+    
+    Browsers.Item(BtBrower).Run(page)
+    
+    Delay(10000) 
+    On Error Resume Next
+    if (Sys.Browser(BrowserProcess).WaitPage(SubPage,5000)) then
+      
+      log.Message "Iniciando inicio de sección"
+      Delay(2345)
+      set page = Sys.Browser(BrowserProcess).waitPage(SubPage,50000)
+    
+      set obj = page.NativeWebObject.Find("ObjectIdentifier","username")  
+      if obj.Exists then
+         obj.click
+         obj.SetText "admin"
+      end if
+    
+      set obj = page.NativeWebObject.Find("ObjectIdentifier","password")  
+      if obj.Exists then
+         obj.click
+         obj.SetText "admin"
+      end if
+    
+      set obj = page.NativeWebObject.Find("ObjectLabel","Iniciar sesión")
+      if obj.Exists Then
+        obj.Click
+      end if
+    
+    else
+      Delay(10000)
+      log.Message "Se ingreso directo al sistema. Inicio de sección necesario",,,,Sys.Desktop.ActiveWindow
+      
+      SignIn() 'se inicia seccion desde swagger
+      set page = Sys.Browser(BrowserProcess).waitPage(Page,50000) 
+      Delay(9876)
+      
+    end if 
+       
+    set pageIe = TNT.Process(BrowserProcess)
+        
+  end sub
+  
+  public function WaitTabPage(Tab)
+  
+    set page = Sys.Browser(BrowserProcess).waitPage(Tab,50000)  
+    if page.Exists then
+      Log.Message "[successful]: page found"
+      WaitTabPage = true
+    Else
+      Log.Error "[Error]: page not found"
+      WaitTabPage = false
+    end if
+    
+  end function
+  
+  public sub NodeTab(Tab)
+  
+    set page = Sys.Browser(BrowserProcess).waitPage(Tab,50000)  
+    if page.Exists then
+      Log.Message "[successful]: page found"
+      IeTab = Tab
+    Else
+      Log.Error "[Error]: page not found"
+    end if
+    
+  end sub
+  
+  public sub NavigateTab(Opcion)
+  
+    Delay(12000)
+    set var =createobject("wscript.shell")
+    set obj = Sys.Browser(BrowserProcess).Page("https://ncalite-pi.ternium.net/#/admin/docs").Panel(1).Panel(0).Frame(0).Panel("header").Panel(0).Form("api_selector").Panel(0).Select("select_baseUrl")
+    obj.Click
+  
+    Count = obj.wItemCount
+    for i = 0 to Count
+      Delay(2000)
+      Sys.Refresh
+      text = Obj.wItem(i)
+      log.Message "Nodo:"&Text
+    
+      if text = Opcion then
+        var.sendkeys "{ENTER}"
+        exit for
+      end if
+    
+      var.sendKeys "{DOWN}"
+    next
+    Delay(13456)
+       
+  end sub
+  
+  '------------------------------ Operaciones NativeWeb ---------------------------------------------------------
+  public sub ClickObjFind(Properties, Value)
+  
+    set page = Sys.Browser(BrowserProcess).waitPage(IeTab,50000)
+    
+    if not page.Exists then
+      log.Error "[Error]: Page not found"
+    end if
+    
+    set obj = page.NativeWebObject.Find(Properties,Value)  
+    if obj.Exists then 
+       obj.Focus 
+       obj.click
+       log.Message "[Successful]: Object found"
+    Else
+       Log.Error "[Error]: Object not found",,,,Sys.Desktop.ActiveWindow.Activate
+    end if
+          
+  end sub
+  
+  public function GetTextObjFind(Properties, Value)
+  
+    set page = Sys.Browser(BrowserProcess).waitPage(IeTab,50000)
+    
+    if not page.Exists then
+      log.Error "[Error]: Page not found"
+    end if
+    
+    set obj = page.NativeWebObject.Find(Properties,Value)  
+    if obj.Exists then 
+       GetTextObjFind = obj.contentText
+       log.Message "[Successful]: Object found"
+    Else
+       Log.Error "[Error]: Object not found",,,,Sys.Desktop.ActiveWindow.Activate
+    end if
+    
+  end function
+  
+  public sub SetTextObjFind(Properties, Value, Text)
+  
+    set page = Sys.Browser(BrowserProcess).waitPage(IeTab,50000)
+    
+    if not page.Exists then
+      log.Error "[Error]: Page not found"
+    end if
+    
+    set obj = page.NativeWebObject.Find(Properties,Value)  
+    if obj.Exists then 
+       obj.Focus 
+       obj.click
+       obj.setText Text
+       log.Message "[Successful]: Object found"
+    Else
+       Log.Error "[Error]: Object not found",,,,Sys.Desktop.ActiveWindow.Activate
+    end if
+    
+  end sub
+  
+  public sub FocusObjFind(Properties, Value)
+  
+    set page = Sys.Browser(BrowserProcess).waitPage(IeTab,50000)
+    
+    if not page.Exists then
+      log.Error "[Error]: Page not found"
+    end if
+    
+    set obj = page.NativeWebObject.Find(Properties,Value)  
+    if obj.Exists then 
+       obj.Focus 
+       log.Message "[Successful]: Object found",,,,Sys.Desktop.ActiveWindow
+    Else
+       Log.Error "[Error]: Object not found",,,,Sys.Desktop.ActiveWindow
+    end if
+    
+  end sub
+  
+  public function WaitExistObjFind(Properties, Value,TimeOut)
+  
+    set page = Sys.Browser(BrowserProcess).waitPage(IeTab,50000)
+    
+    if not page.Exists Then
+      log.Error "[Error]: Page not found"
+    end if
+    
+    for i = 0 to TimeOut
+      set obj = page.NativeWebObject.Find(Properties,Value)
+      if obj.Exists Then
+        log.Message "[Sucessful]: Object found",,,,Sys.Desktop.ActiveWindow
+        WaitExistObjFind = True
+        exit for
+      else
+        Delay(1000)
+      end if
+    next
+    
+    if not obj.Exists Then
+      Log.Message "time: ["&timeOut&"] Object not found",,,,Sys.Desktop.ActiveWindow
+      WaitExistObjFind = False
+    end if
+    
+    
+  end function
+  
+  public function ExistsObjFind(Properties, Value)
+  
+    set page = Sys.Browser(BrowserProcess).waitPage(IeTab,50000)
+    
+    if not page.Exists then
+      log.Error "[Error]: Page not found"
+    end if
+    
+    set obj = page.NativeWebObject.Find(Properties,Value)  
+    if obj.Exists then 
+       log.Message "[Successful]: Object found"
+       ExistsObjFind = True
+    Else
+       Log.Warning "[Error]: Object not found",,,,Sys.Desktop.ActiveWindow.Activate
+       ExistsObjFind = False
+    end if
+    
+  end Function
+  
+  public sub setTextArea(Properties, Value, Text)
+  
+    set page = Sys.Browser(BrowserProcess).waitPage(IeTab,50000)
+    
+    if not page.Exists then
+      log.Error "[Error]: Page not found"
+    end if
+    
+    set obj = page.NativeWebObject.Find(Properties,Value)  
+    if obj.Exists then 
+       obj.keys Text 
+       log.Message "[Successful]: Object found"
+    Else
+       Log.Error "[Error]: Object not found",,,,Sys.Desktop.ActiveWindow.Activate
+    end if
+    
+  end sub
+  
+  public function ValidateEnabledObjFind(Properties, Value)
+    
+    set page = Sys.Browser(BrowserProcess).waitPage(IeTab,50000)
+    
+    if not page.Exists then
+      log.Error "[ERROR]: Page not found"
+    end if 
+    
+    set obj = page.NativeWebObject.Find(Properties,Value)
+    if obj.Exists Then
+      log.Message "Object found"
+      ValidateEnabledObjFind = obj.Enabled
+    Else
+      Log.Error "Object not found",,,,Sys.Desktop.ActiveWindow
+    end if  
+    
+  end function
+  
+  public sub WaitObjFind(Properties, Value,timeOut)
+  
+    Dim obj
+    set page = Sys.Browser(BrowserProcess).waitPage(IeTab,50000)
+    
+    if not page.Exists then
+      log.Error "[ERROR]: Page not found"
+    end if 
+    
+    for i = 1 to timeOut 
+      set obj = page.NativeWebObject.Find(Properties,Value)
+      if obj.Exists Then
+        log.Message "Object found"
+        exit for
+      Else
+        Delay(1000)
+      end if  
+    next
+    
+    if not obj.Exists Then
+      log.Error "time: ["&timeOut&"] Object not found",,,,Sys.Desktop.ActiveWindow
+    end if
+    
+  end sub
+  
+  
+  '------------------------------ Manejo de Nodos ------------------------------
+  
+  Public Function waitObj(objId,timeOut)
+			
+		if not pageIe.waitObject(objId,timeOut) is Nothing then
+			FunctionStatus = "[Existoso]"
+			Log.Message FunctionAction & ": " & FunctionStatus
+			waitObj = True
+		else
+			FunctionStatus = "[Error] "
+			Log.Warning FunctionAction & ": " & FunctionStatus
+			
+			waitObj = False
+		end if
+
+	end Function
+  
+  public function ValidateEnabledObjNode(objId)
+  
+    if not pageIe.waitObject(objId,UTIL.getTimeOut) is nothing Then
+      set obj = pageIe.FindObject(objId)
+      functionStatus = "[Exitoso]"
+      Log.Message FunctionStatus
+      ValidateEnabledObjNode = obj.Enabled
+    else
+      FunctionStatus = "[Error] "
+			Log.Error FunctionStatus
+    end if
+    
+  end function
+  
+  public Function getTextNode(objId)
+  
+		if not pageIe.waitObject(objId,UTIL.getTimeOut) is nothing then
+			set obj = pageIe.FindObject(objId)
+			getText = obj.contentText
+			FunctionStatus = "[Exitoso]"
+			Log.Message FunctionAction & ": " & FunctionStatus
+      getTextNode = getText
+		else
+			FunctionStatus = "[Error] "
+			Log.Error FunctionAction & ": " & FunctionStatus
+			
+		end if
+    
+	end Function
+  
+	public sub setFocus(objId)
+  
+    if not pageIe.waitObject(objId,UTIL.getTimeOut) is nothing then
+			set obj = pageIe.FindObject(objId)
+			obj.focus
+			FunctionStatus = "[Successful]: Element found"
+			Log.Message FunctionAction & ": " & FunctionStatus
+		else
+			FunctionStatus = "[Error]: Element not found "
+			Log.Warning FunctionAction & ": " & FunctionStatus
+		end if
+    
+  end sub
+  
+  public sub setTextTextArea(objId,vText)
+  
+    if not pageIe.waitObject(objId,UTIL.getTimeOut) is nothing then
+			set obj = pageIe.FindObject(objId)
+			obj.keys vText
+			FunctionStatus = "[Sucessful]: Element found"
+			Log.Message FunctionAction & ": " & FunctionStatus
+		else
+			FunctionStatus = "[Error]: Element not found "
+			Log.Warning FunctionAction & ": " & FunctionStatus
+		end if
+    
+  end sub
+  
+  public sub setTextNode(objId,vText)
+  
+    if not pageIe.waitObject(objId,UTIL.getTimeOut) is nothing then
+			set obj = pageIe.FindObject(objId)
+			obj.setText vText
+			FunctionStatus = "[Sucessful]: Element found"
+			Log.Message FunctionAction & ": " & FunctionStatus
+		else
+			FunctionStatus = "[Error]: Element not found "
+			Log.Warning FunctionAction & ": " & FunctionStatus
+		end if
+    
+  end sub
+  
+  public sub ClickObjNode(objId)
+  
+		if not pageIe.waitObject(objId,UTIL.getTimeOut) is nothing then
+			set obj = pageIe.FindObject(objId)
+			obj.Focus
+      obj.Click
+			FunctionStatus = "[Successful]: Element found"
+			Log.Message FunctionAction & ": " & FunctionStatus
+		else
+			FunctionStatus = "[Error]: Element not found "
+			Log.Error FunctionAction & ": " & FunctionStatus
+		end if
+    
+  end sub
+  
+  public sub ComboBoxObjNode(objId,ListId,strOption)
+    
+    'objid = propiedades del div
+    'ListId = propiedades del div desplegable
+      
+    if pageIe.waitObject(objId,UTIL.getTimeOut) is nothing then
+			FunctionStatus = "[Error]:  Object ComboBox not found"
+			Log.Error FunctionAction & ": " & FunctionStatus
+		end if
+    
+    set obj = pageIe.FindObject(objId)
+    obj.Click
+    
+    set TextFind = pageIe.FindObject("ObjectType:=Textbox,placeholder:=Search...")
+    if TextFind.Exists then
+      TextFind.Click
+      TextFind.SetText strOption
+      
+      Delay(6789)
+      set SelectFind = pageIe.FindObject(ListId)
+      Delay(5678)
+      if SelectFind.ContentText = "Without Result" then
+        Log.Error "El item: "&strOption& " no se encuentra",,,,Sys.Desktop.ActiveWindow
+      else
+        SelectFind.Click
+        log.Message "Item:"&strOption&" encontrado y seleccionado"
+      end if
+      
+      'regresar al proceso base
+      SetPrincipalPage
+      
+    else
+      log.Error "[ERROR]: ComboBox no desplegado"  
+    end if
+        
+  end sub
+
+  public sub setPrincipalPage()
+  
+    set pageIe = TNT.Process(BrowserProcess)
+    
+  end sub
+  
+  Public Function existObj (objProperty,timeOut)
+    
+		if pageIe.waitObjExist(objProperty,timeOut) then
+			Log.Message "[Encontrado] "
+			existObj = True
+		else
+			FunctionStatus = "[No Encontrado] "
+			Log.Message FunctionStatus
+			existObj = False
+		end if
+  
+  end function
+  
+  public Sub setNode(objProperty)
+  
+		set pageIe = pageIe.WaitNode(objProperty,UTIL.getTimeOut)
+    
+    if pageIe is nothing then
+			FunctionStatus = "Error: Node: " & objProperty & " no encontrado"
+			
+			Log.Warning FunctionStatus
+		else
+			FunctionStatus = "Exitoso : Node " & objProperty & " encontrado"
+			Log.Message FunctionStatus
+		end if
+		FunctionStatus = ""
+
+	End Sub
+  
+  
+  '------------------------ Functions Node Principal Page Opcional --------------------
+  public sub ClickObjPrincipal(objId)
+  
+    uriArray = split(objId,":=")
+    set page = Sys.Browser(BrowserProcess).waitPage(IeTab,50000)
+    set obj = page.NativeWebObject.Find(uriArray(0),uriArray(1))
+    obj.Focus
+    obj.Click
+    
+  end sub
+  
+  public sub SetTextAreaPrincipal(objId,vText)
+  
+    uriArray = split(objId,":=")
+    set page = Sys.Browser(BrowserProcess).waitPage(IeTab,50000)
+    set obj = page.NativeWebObject.Find(uriArray(0),uriArray(1))
+    obj.Click
+    
+    set keys = CreateObject("wscript.shell")
+    keys.sendKeys "^a" '"^e"
+    keys.sendKeys "{DEL}"
+    
+    obj.keys vText
+    
+  end sub
+  
+  public sub SetTextPrincipal(objId,vText)
+  
+    uriArray = split(objId,":=")
+    set page = Sys.Browser(BrowserProcess).waitPage(IeTab,50000)
+    set obj = page.NativeWebObject.Find(uriArray(0),uriArray(1))
+    obj.setText vText
+    
+  end sub
+  
+  public function GetTextPrincipal(objId)
+  
+    uriArray = split(objId,":=")
+    set page = Sys.Browser(BrowserProcess).waitPage(IeTab,50000)
+    set obj = page.NativeWebObject.Find(uriArray(0),uriArray(1))
+    GetTextPrincipal = obj.contentText
+    
+  end function
+  
+  '-------------------------------------------------- NCA CLOUD -----------------------------------------------------
+  public sub Autorizacion() 'Autoriza el login de Microsoft
+    
+    Dim strUsuario  : strUsuario  = Project.Variables.LoginData.Value("Usuario")
+  	Dim strClave    : strClave    = Project.Variables.LoginData.Value("Password")
+    
+    Delay(9876)    
+    set page = Sys.Browser(BrowserProcess).Page("*")
+    
+    set obj = page.NativeWebObject.Find("contentText","Use another account")  
+    if obj.Exists then
+       obj.click
+    end if
+
+    Delay(12987)
+    set obj = page.NativeWebObject.Find("ObjectType","EmailInput")  
+    if obj.Exists then
+       obj.click
+       obj.SetText strUsuario
+    end if    
+  
+    set obj = page.NativeWebObject.Find("idStr","idSIButton9")  
+    if obj.Exists then
+       obj.Focus
+       obj.click
+    end if 
+  
+    Delay(12987)
+    set obj = page.NativeWebObject.Find("ObjectType","PasswordBox")  
+    if obj.Exists then
+       obj.click
+       obj.SetText strClave
+    end if 
+  
+    set obj = page.NativeWebObject.Find("idStr","idSIButton9")  
+    if obj.Exists then
+       obj.Focus
+       obj.click
+    end if 
+  
+    Delay(20000)
+    
+  end sub
+  
+  public sub LoginNCACloud(page,SubPage)
+  
+    Cerrar
+    
+    call TestedApps.chrome.Run
+    Delay(30000)
+    
+    Browsers.Item(BtBrower).Run(page)
+    Delay(15000)
+    
+    MaximizeScreen() 'Maximizar pantalla
+    Autorizacion()
+    
+    On Error Resume Next
+    if (Sys.Browser(BrowserProcess).WaitPage(SubPage,50000)) then
+      
+      Delay(2345)
+      set page = Sys.Browser(BrowserProcess).waitPage(SubPage,50000)
+      
+      Delay(9876)
+      for i = 0 to 300
+        set obj = page.NativeWebObject.Find("classname","show-menu")  
+        if obj.Exists then
+           obj.click
+           exit For
+        Else
+          Delay(1000)
+        end if
+      next 
+          
+    end if 
+       
+    set pageIe = TNT.Process(BrowserProcess)
+    
+  end sub
+  
+  
+  public sub MenuNCACLOUD(menu,SubMenu)
+  
+    set page = Sys.Browser(BrowserProcess).waitPage(IeTab,50000)
+    
+    set obj = page.NativeWebObject.Find("contentText",menu)  
+    if not obj.Exists then
+      log.Error "Menu:"&menu&" no se encontro",,,,Sys.Desktop.ActiveWindow
+    else
+       obj.click
+    end if
+    
+    set obj = page.NativeWebObject.Find("contentText",Submenu)  
+    if not obj.Exists then
+      log.Error "Sub menu:"&SubMenu&" no se encontro",,,,Sys.Desktop.ActiveWindow
+    else
+       obj.click
+    end if
+      
+  end sub
+  
+  
+
+  
+  
+  
+  '--------------------------------------------------- BD -----------------------------------------------------------
+  public Function NCALiteSQl(v_sql,Column)
+  
+    Dim oCon 
+    Set oCon = CreateObject("ADODB.Connection")
+    Dim oRs
+    Set oRs  = CreateObject("ADODB.Recordset")
+
+    conn = "Provider=OraOLEDB.Oracle.1;Persist Security Info=False;User ID=DMLNCALITE;Password=2Uvy.GI0D_CQd;Data Source=TERAZNCADB04.ternium.Techint.net:1253/ncaltepi.ternium.techint.net"
+      
+    oCon.Open conn
+    Set oRs = oCon.Execute(v_sql)
+    
+    NCALiteSQl = oRs.Fields(Column).Value 
+    
+    oCon.Close
+    Set oRs = Nothing
+    Set oCon = Nothing
+
+  end function
+
+  
+
+end class
