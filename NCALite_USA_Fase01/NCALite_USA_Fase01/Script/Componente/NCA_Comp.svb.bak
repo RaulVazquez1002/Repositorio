@@ -1,0 +1,665 @@
+﻿'USEUNIT COMMON
+'USEUNIT KERNEL
+'USEUNIT NCALITE
+'USEUNIT JSON
+'USEUNIT ESTACK
+
+Dim NCA
+
+if not IsObject(NCA) Then
+  set NCA = new NCAL
+end if
+
+class NCAL
+
+  public ProcessBrowser
+  public BrowsersPage 
+  Dim GMAT
+  Dim SQL
+  Dim Resultado
+  
+  Private Sub Class_Initialize
+  
+     Browser.BtBrower = btChrome
+     Browser.BrowserProcess = "chrome"
+     
+     BrowerRunOptions()
+     
+  end sub
+  
+  
+  public sub AltaMaterial()
+    
+    BrowsersPage = "https://ncalite-pi.ternium.net/#/admin/docs"
+    
+    
+    Browser.Login "https://ncalite-pi.ternium.net/#/admin/docs","https://ncalite-pi.ternium.net/#/accessdenied"
+    Browser.WaitTabPage "https://ncalite-pi.ternium.net/#/admin/docs" 
+    Browser.NodeTab "https://ncalite-pi.ternium.net/#/admin/docs" 
+    Browser.NavigateTab "ncacloudconectorsap (/ncacloudconectorsap/v2/api-docs)"
+    
+    Browser.WaitTabPage "https://ncalite-pi.ternium.net/#/admin/docs"
+    
+    'Click en la opción Stock-Resource
+    Delay(9567)
+    set stock_resource = Sys.Browser(ProcessBrowser).Page(BrowsersPage).Panel(1).Panel(0).Frame(0).Panel("swagger_ui_container").Panel("resources_container").Panel(82).Link(0)
+    stock_resource.Focus
+    stock_resource.Click
+    
+    'Click en la opción /api/altaMaterialesPorCompra
+    Delay(9567)
+    set api_altaMaterial = Sys.Browser(ProcessBrowser).Page(BrowsersPage).Panel(1).Panel(0).Frame(0).Panel("swagger_ui_container").Panel("resources_container").Panel(83).Link(1)
+    api_altaMaterial.Focus
+    api_altaMaterial.Click
+
+    Delay(4567)
+    Browser.setPrincipalPage
+    Browser.setNode "ObjectIdentifier:=stock45resource_altaMaterialesPorCompraUsingPOST_content"
+    Browser.ClickObjNode "ObjectLabel:=lData,ObjectType:=Textarea" 
+    
+    Delay(6000)
+    Browser.setTextTextArea "ObjectLabel:=lData,ObjectType:=Textarea",JS.AltaMaterial()
+    Browser.ClickObjNode "ObjectIdentifier:=Try it out!"
+    
+    set ResponceCode = Sys.Browser("chrome").Page("https://ncalite-pi.ternium.net/#/admin/docs").Panel(1).Panel(0).Frame(0).Panel("swagger_ui_container").Panel("resources_container").Panel("stock45resource_altaMaterialesPorCompraUsingPOST_content").Panel(1).Panel(3).TextNode(0)
+    ResponceCode.Focus
+    ResponceCode.Click
+    
+    GetCode = CInt(ResponceCode.contentText)
+    Log.Message "Codigo:"&GetCode
+    
+    if not JS.GetResponseCode(GetCode) Then
+      log.Error "Error al dar de alta el material",,,,Sys.Desktop.ActiveWindow  
+    end if
+    
+    Delay(9876)
+    Log.Message "Material dado de alta correctmente",,,,Sys.Desktop.ActiveWindow
+    JS.SaveMaterial()
+    
+    Delay(9876)
+    Browser.Cerrar
+    
+     
+  end sub
+  
+  public sub ConsultaMaterial()
+  
+    GMAT = Data.GetData("MATERIAL","")  
+    log.Message "Material a consultar:"&GMAT
+    
+    SQL = "SELECT * FROM LTE_STOCK.STOCK_UNIT where codigo = '"&GMAT&"'"
+    SQLMAT = Browser.NCALiteSQl(SQL,"codigo")
+    
+    log.Message SQLMAT
+    if GMAT = SQLMAT Then
+      log.Message "Material dado de alta correctamente"
+    end if
+    
+  end sub
+  
+  '----------------------------------------------- Consulta Material NCA CLOUD --------------------------------------
+  public sub ConsultaMaterialNcaCloud(EstadoQuality,EstadoMaterial,NodoMaterial)
+    
+    GMAT = Data.GetData("MATERIAL","") '"NEOAUTO40003" 
+    log.Message "Material a consultar:"&GMAT
+    
+    BrowsersPage = "https://ncacloudpi.ternium.com/ReportPBI/reporte/f8a65a9d-7628-4c76-9f1f-074fe9082690"
+    
+    Browser.LoginNCACloud "https://ncacloudpi.ternium.com/","https://ncacloudpi.ternium.com/ReportPBI/reporte/f8a65a9d-7628-4c76-9f1f-074fe9082690"
+    Browser.WaitTabPage "https://ncacloudpi.ternium.com/ReportPBI/reporte/f8a65a9d-7628-4c76-9f1f-074fe9082690" 
+    Browser.NodeTab "https://ncacloudpi.ternium.com/ReportPBI/reporte/f8a65a9d-7628-4c76-9f1f-074fe9082690"
+    
+    Delay(9876)
+    Browser.MenuNCACLOUD "Stock","Material File"
+    
+    Delay(9876)
+    Browser.NodeTab "https://ncacloudpi.ternium.com/FichaMaterial"
+    Browser.WaitObjFind "ObjectType","TextBox",10
+    Browser.SetTextObjFind "ObjectType","TextBox",GMAT
+    Browser.ClickObjFind "outerHTML","<button class=""sc-dCFHLb fhikXy"">refresh</button>"
+    
+    Browser.WaitTabPage "https://ncacloudpi.ternium.com/FichaMaterial"
+    Browser.WaitObjFind "ObjectType","TextBox",50
+    
+    'Validar si esta asignado a un Nodo
+    if Browser.ExistsObjFind("outerText",NodoMaterial) then
+      log.Message "El material: "&GMAT&" esta asignado a un Nodo",,,,Sys.Desktop.ActiveWindow
+    Else
+      log.Error "El material: "&GMAT&" no esta asignado a un Nodo",,,,Sys.Desktop.ActiveWindow
+    end if
+    
+    'Validar el estado Quality
+    if Browser.ExistsObjFind("contentText",EstadoQuality) Then
+      Log.Message "El material se encuentra en el estado quality: "&EstadoQuality,,,,Sys.Desktop.ActiveWindow
+    Else
+      Log.Error "El material no se encuentra en el estado quality: "&EstadoQuality,,,,Sys.Desktop.ActiveWindow
+    end if
+    
+    'Validar el estado material
+    if Browser.ExistsObjFind("contentText",EstadoMaterial) Then
+      Log.Message "El material se encuentra en el estado quality: "&EstadoMaterial,,,,Sys.Desktop.ActiveWindow
+    Else
+      Log.Error "El material no se encuentra en el estado quality: "&EstadoMaterial,,,,Sys.Desktop.ActiveWindow
+    end if
+    
+    Delay(9876)
+    Browser.Cerrar
+    
+              
+  end sub
+  
+  '--------------------------------- Recepción material---------------------------------------------------------
+  public sub RecepcionMaterial(TruckNumber,LocationId)
+  
+    GMAT = Data.GetData("MATERIAL","") '"NEOAUTO40003"
+    log.Message "Material a consultar:"&GMAT
+    
+    
+    Browser.LoginNCACloud "https://ncacloudpi.ternium.com/","https://ncacloudpi.ternium.com/ReportPBI/reporte/f8a65a9d-7628-4c76-9f1f-074fe9082690"
+    Browser.WaitTabPage "https://ncacloudpi.ternium.com/ReportPBI/reporte/f8a65a9d-7628-4c76-9f1f-074fe9082690" 
+    Browser.NodeTab "https://ncacloudpi.ternium.com/ReportPBI/reporte/f8a65a9d-7628-4c76-9f1f-074fe9082690"
+    
+    Delay(9876)
+    Browser.MenuNCACLOUD "Stock","Material Receiving"
+    
+    
+    Browser.NodeTab "https://ncacloudpi.ternium.com/RecepcionarMaterial"
+    
+    Browser.WaitObjFind "placeholder","truck number",15
+    Browser.SetTextObjFind "placeholder","truck number",TruckNumber
+    
+    'click en el boton de busqueda
+    set Busquedatruck = Sys.Browser(ProcessBrowser).Page("https://ncacloudpi.ternium.com/RecepcionarMaterial").Panel("root").Panel(0).Panel(1).Panel(0).Panel(0).Panel(0).SVG(0)
+    Busquedatruck.focus
+    Busquedatruck.Click
+    
+    Delay(6543)
+    Browser.NodeTab "https://ncacloudpi.ternium.com/RecepcionarMaterial"
+    if not Browser.ValidateEnabledObjFind("innerText","UNLOAD") then
+      Delay(2543)
+      log.Error "[Error]: boton no habilitado",,,,Sys.Desktop.ActiveWindow
+    end if
+    
+    Browser.ClickObjFind "innerText","UNLOAD"
+    Delay(9876)
+    Browser.NodeTab "https://ncacloudpi.ternium.com/RecepcionarMaterial/DescargarCamion/"&TruckNumber
+    Browser.SetTextObjFind "placeholder","Location Id",LocationId
+    
+    set BusquedaLocationId = Sys.Browser(ProcessBrowser).Page("https://ncacloudpi.ternium.com/RecepcionarMaterial/DescargarCamion/"&TruckNumber).Panel("root").Panel(0).Panel(1).Panel(0).Panel(0).SVG(0)
+    BusquedaLocationId.focus
+    BusquedaLocationId.Click
+   
+   'validar la ubicación 
+    if not Browser.ExistsObjFind("ContentText","MCL ENTRY WHS - "&LocationId) then
+      log.Message "[Error]: Ubicación no valida",,,,Sys.Desktop.ActiveWindow
+    end if
+    
+    Delay(3456)
+    Browser.SetTextObjFind "placeholder","Coil Id",GMAT
+    
+    Delay(3456)
+    set BusquedaCoilId = Sys.Browser(ProcessBrowser).Page("https://ncacloudpi.ternium.com/RecepcionarMaterial/DescargarCamion/"&TruckNumber).Panel("root").Panel(0).Panel(1).Panel(1).Panel(0).SVG(0)
+    BusquedaCoilId.Focus
+    BusquedaCoilId.Click
+    
+    Browser.WaitObjFind "placeholder","Coil Id",15 'esperar pantalla de carga por 15 segundos
+    if not Browser.ExistsObjFind("ContentText","MCL ENTRY WHS - "&LocationId) then
+      log.Error "[Error]: Ubicación no valida",,,,Sys.Desktop.ActiveWindow
+    end if
+    
+    if not Browser.ExistsObjFind("ContentText","COIL - "&GMAT) then
+      log.Error "[Error]: COIL no valida",,,,Sys.Desktop.ActiveWindow
+    end if
+    
+    Delay(2876)
+    'guardar el new wight
+    set NewWight = Sys.Browser(ProcessBrowser).Page("https://ncacloudpi.ternium.com/RecepcionarMaterial/DescargarCamion/"&TruckNumber).Panel("root").Panel(0).Panel(3).Panel(0).Panel(2).Panel(1).Label(0)
+    log.Message NewWight.contentText
+    Data.WriteData "NEWWIGHT","",Cstr(NewWight.contentText)
+    
+    Browser.WaitObjFind "innerText","Add",10 
+    
+    if not Browser.ValidateEnabledObjFind("innerText","Add") then
+      Delay(2543)
+      log.Error "[Error]: boton no habilitado",,,,Sys.Desktop.ActiveWindow
+    end if
+    
+    'Click en el boton Add
+    Browser.setPrincipalPage
+    Browser.ClickObjNode "ObjectType:=Button,contentText:=Add"
+    
+    Delay(2345)
+    Browser.NodeTab "https://ncacloudpi.ternium.com/RecepcionarMaterial/DescargarCamion/"&TruckNumber
+    Browser.WaitObjFind "innerText","UNLOAD COMPLETE",10
+    Browser.ClickObjFind "innerText","UNLOAD COMPLETE"
+    
+    'validar si mensaje aparece
+    Delay(10345)
+    if not Sys.Browser(ProcessBrowser).Page("https://ncacloudpi.ternium.com/RecepcionarMaterial/DescargarCamion/"&TruckNumber).Panel(0).Panel(0).Exists then 
+      Log.Error "[Error]: no se mostro el mensaje de UNLOAD COMPLETE"   
+    end if    
+
+    if Browser.ExistsObjFind("textContent","   "&GMAT&" - Unload Complete Successfully") Then
+        Browser.ClickObjFind "ContentText","Accept"
+        log.Message "[Correcto]: UNLOAD COMPLETE exitosamente",,,,Sys.Desktop.ActiveWindow
+    Else
+      Log.Error "[ERROR]: UNLOAD COMPLETE presento error",,,,Sys.Desktop.ActiveWindow
+    end if
+    
+    Delay(7654)
+    Browser.Cerrar
+    
+  end sub
+  
+  public sub AgregarNuevoDefectoMaterial(Defect,Cause,OriginLine,ResultadoDictamen)
+  
+    GMAT = Data.GetData("MATERIAL","") '"NEOAUTO40003" 
+    log.Message "Material a consultar:"&GMAT
+    
+    Browser.LoginNCACloud "https://ncacloudpi.ternium.com/","https://ncacloudpi.ternium.com/ReportPBI/reporte/f8a65a9d-7628-4c76-9f1f-074fe9082690"
+    Browser.WaitTabPage "https://ncacloudpi.ternium.com/ReportPBI/reporte/f8a65a9d-7628-4c76-9f1f-074fe9082690" 
+    Browser.NodeTab "https://ncacloudpi.ternium.com/ReportPBI/reporte/f8a65a9d-7628-4c76-9f1f-074fe9082690"
+    
+    Delay(9876)
+    Browser.MenuNCACLOUD "Quality","Disposition"
+    
+    Browser.NodeTab "https://ncacloudpi.ternium.com/DictaminarMaterial"
+    Browser.WaitObjFind "classname","sc-UpCWa dQEraS sc-bRlCZA hopyML __input",10 
+    Delay(5678)
+    Browser.SetTextObjFind "classname","sc-UpCWa dQEraS sc-bRlCZA hopyML __input",GMAT 'ingresar material
+    
+    Browser.WaitObjFind "classname","sc-jhrdCu ikodfv right",10
+    Browser.ClickObjFind "classname","sc-jhrdCu ikodfv right" 'click en boton refresh
+    
+    'validar boton de agregar defecto
+    Browser.WaitObjFind "classname","sc-jhrdCu ikodfv right",10
+    if not Browser.ExistsObjFind("classname","sc-jhrdCu dIDGaQ") then 
+      log.Error "[Error]: No se mostro boton para agregar defecto -> +",,,,Sys.Desktop.ActiveWindow
+    end if
+    
+    Browser.ClickObjFind "classname","sc-jhrdCu dIDGaQ"
+    Browser.WaitObjFind "classname","sc-gInZnl jLqaGr modal-body",10 'validar popUp
+    
+    '----- Posicionar ventana add efect
+    Delay(5678)
+    Browser.SetPrincipalPage
+    
+    Browser.setNode "classname:=sc-gInZnl jLqaGr modal-body" 
+    Browser.WaitObj "ObjectType:=Button,classname:=sc-iAEawV hpIkXa,Index:=0",30
+    Browser.ComboBoxObjNode "ObjectType:=Button,classname:=sc-iAEawV hpIkXa,Index:=0","classname:=sc-jfTVlA eDkDur",Defect
+    
+    Browser.setNode "classname:=sc-gInZnl jLqaGr modal-body"
+    Browser.WaitObj "ObjectType:=Button,classname:=sc-iAEawV hpIkXa,Index:=1",30
+    Browser.ComboBoxObjNode "ObjectType:=Button,classname:=sc-iAEawV hpIkXa,Index:=1","classname:=sc-jfTVlA eDkDur",Cause
+    
+    Browser.setNode "classname:=sc-gInZnl jLqaGr modal-body"
+    Browser.WaitObj "ObjectType:=Button,classname:=sc-iAEawV hpIkXa,Index:=0",30
+    Browser.ComboBoxObjNode "ObjectType:=Button,classname:=sc-iAEawV hpIkXa,Index:=0","classname:=sc-jfTVlA eDkDur",OriginLine
+    
+    Browser.setPrincipalPage
+    Browser.setNode "classname:=sc-eJKXev iHEELA modal-footer"
+    Browser.WaitObj "classname:=sc-jhrdCu iVhbDK sc-gBInCZ iqNciQ,ObjectType:=Button,innerText:=SAVE",15
+    Browser.ClickObjNode "classname:=sc-jhrdCu iVhbDK sc-gBInCZ iqNciQ,ObjectType:=Button,innerText:=SAVE"
+    
+    Delay(11675)
+    Browser.NodeTab "https://ncacloudpi.ternium.com/DictaminarMaterial"
+    
+    'validar si mensaje de aviso se muestra
+    if not Browser.ExistsObjFind("ObjectIdentifier","swal2_title") then
+      log.Error "[Error]: Mensaje de dictamen no visualizado...",,,,Sys.Desktop.ActiveWindow
+    end if
+    
+    'validar si el mensaje es de operación correcta
+    Resultado = Browser.GetTextObjFind("ObjectIdentifier","swal2_title")
+    if Resultado <> ResultadoDictamen then
+      log.Error "[Error]: Dictamen no realizado correctamente",,,,Sys.Desktop.ActiveWindow
+    end if
+   
+    log.Message "Dictamen material realizado con exito",,,,Sys.Desktop.ActiveWindow
+    Browser.ClickObjFind "classname","swal2-confirm swal2-styled swal2-default-outline"  
+    
+    Delay(6789) 
+    Browser.WaitObjFind "classname","sc-UpCWa dQEraS sc-bRlCZA hopyML __input",10
+    Browser.Cerrar
+      
+  end sub
+  
+  public sub DegradarMaterial(Disposition)
+  
+    GMAT = Data.GetData("MATERIAL","")  '"NEOAUTO40003"  
+    log.Message "Material a consultar:"&GMAT
+    
+    Browser.LoginNCACloud "https://ncacloudpi.ternium.com/","https://ncacloudpi.ternium.com/ReportPBI/reporte/f8a65a9d-7628-4c76-9f1f-074fe9082690"
+    Browser.WaitTabPage "https://ncacloudpi.ternium.com/ReportPBI/reporte/f8a65a9d-7628-4c76-9f1f-074fe9082690" 
+    Browser.NodeTab "https://ncacloudpi.ternium.com/ReportPBI/reporte/f8a65a9d-7628-4c76-9f1f-074fe9082690"
+    
+    Delay(9876)
+    Browser.MenuNCACLOUD "Quality","Disposition"
+    
+    Browser.NodeTab "https://ncacloudpi.ternium.com/DictaminarMaterial"
+    Browser.WaitObjFind "classname","sc-UpCWa dQEraS sc-bRlCZA hopyML __input",30
+    Delay(5678)
+    Browser.SetTextObjFind "classname","sc-UpCWa dQEraS sc-bRlCZA hopyML __input",GMAT 'ingresar material
+    
+    Browser.WaitObjFind "classname","sc-jhrdCu ikodfv right",10
+    Browser.ClickObjFind "classname","sc-jhrdCu ikodfv right" 'click en boton refresh
+    
+    'validar boton de agregar defecto
+    Browser.WaitObjFind "classname","sc-jhrdCu ikodfv right",10
+    
+    Delay(8765)
+    Browser.setPrincipalPage
+    Browser.setNode "classname:=sc-leZLoi QmFWZ"
+    Browser.WaitObj "ObjectType:=Button,classname:=sc-iAEawV hpIkXa,Index:=1",30
+    Browser.ComboBoxObjNode "ObjectType:=Button,classname:=sc-iAEawV hpIkXa,Index:=3","classname:=sc-hTBuwn eKExRe",Disposition
+    
+    Browser.NodeTab "https://ncacloudpi.ternium.com/DictaminarMaterial"
+    Browser.WaitObjFind "outerHTML","<button class=""sc-jhrdCu ikodfv"">Disposition</button>",15
+    
+    'validar si el boton DESPOSITION SE HABILITO  
+    if not Browser.ValidateEnabledObjFind("outerHTML","<button class=""sc-jhrdCu ikodfv"">Disposition</button>") Then
+      Log.Error "[Error]: el boton DISPOSITION no se encuentra habilitado",,,,Sys.Desktop.ActiveWindow
+    end if
+    
+    Delay(5678)
+    log.Message "Click en boton DISPOSITION"
+    Browser.ClickObjFind "outerHTML","<button class=""sc-jhrdCu ikodfv"">Disposition</button>"
+    
+    'classname, swal2-popup swal2-modal swal2-icon-question swal2-show
+    if not Browser.WaitExistObjFind("className", "swal2-popup swal2-modal swal2-icon-question swal2-show",30) Then
+      Log.Error "[Mensaje de PopUp no se mostro]",,,,Sys.Desktop.ActiveWindow
+    end if
+    
+    Browser.setPrincipalPage
+    Browser.setNode "classname:=swal2-popup swal2-modal swal2-icon-question swal2-show"
+    Browser.ClickObjNode "textContent:=Accept,ObjectType:=Button"
+    
+    Delay(9876)
+    Browser.NodeTab "https://ncacloudpi.ternium.com/DictaminarMaterial"
+    Browser.setPrincipalPage
+    Browser.setNode "className:=sc-jTjUTQ jthCAw modal-body"
+    
+    Browser.ClickObjNode "ObjectIdentifier:=5,ObjectType:=Cell"
+    Resultado = Browser.getTextNode("ObjectIdentifier:=5,ObjectType:=Cell")
+    Log.Message "Resultado: "&  Resultado
+    
+    if Resultado <> "Disposition OK" then
+      Log.Error "[Error]: hubo un error al realizar el desgradado material",,,,Sys.Desktop.ActiveWindow
+    end if
+    
+    Browser.setPrincipalPage
+    Browser.setNode "className:=sc-jRwbcX jRgcMW modal-footer"
+    Browser.ClickObjNode "innerText:=EXIT,ObjectType:=Button"
+    
+    Delay(9876)
+    Browser.NodeTab "https://ncacloudpi.ternium.com/DictaminarMaterial"
+    
+    Browser.setPrincipalPage
+    Browser.setNode "classname:=sc-leZLoi QmFWZ"
+    
+    Resultado = Browser.getTextNode("ObjectType:=Button,classname:=sc-iAEawV hpIkXa,Index:=3")
+    log.Message "Disposition: "&Resultado
+    
+    if Resultado <> Disposition then
+      log.Error "[Error]: la disposition no cambio a"&Disposition,,,,Sys.Desktop.ActiveWindow
+    end if
+    
+    log.Message "Operación Desgradar material finalizado correctamente",,,,Sys.Desktop.ActiveWindow
+    Browser.NodeTab "https://ncacloudpi.ternium.com/DictaminarMaterial"
+    Browser.setPrincipalPage
+    
+    Delay(9866)
+    Browser.Cerrar
+        
+  end sub
+  
+  '----------------------------------------------- Subir calidad Material 1er grado---------------------
+  public sub SubirCalidadMaterial(QualityCalidad)
+    
+    GMAT = Data.GetData("MATERIAL","")  '"NEOAUTO40003" 
+    log.Message "Material a consultar:"&GMAT
+    
+    BrowsersPage = "https://ncacloudpi.ternium.com/ReportPBI/reporte/f8a65a9d-7628-4c76-9f1f-074fe9082690"
+    
+    Browser.LoginNCACloud "https://ncacloudpi.ternium.com/","https://ncacloudpi.ternium.com/ReportPBI/reporte/f8a65a9d-7628-4c76-9f1f-074fe9082690"
+    Browser.WaitTabPage "https://ncacloudpi.ternium.com/ReportPBI/reporte/f8a65a9d-7628-4c76-9f1f-074fe9082690" 
+    Browser.NodeTab "https://ncacloudpi.ternium.com/ReportPBI/reporte/f8a65a9d-7628-4c76-9f1f-074fe9082690"
+    
+    Delay(9876)
+    Browser.MenuNCACLOUD "Stock","Material File"
+    
+    Delay(9876)
+    Browser.NodeTab "https://ncacloudpi.ternium.com/FichaMaterial"
+    Browser.WaitObjFind "ObjectType","TextBox",30
+    Browser.SetTextObjFind "ObjectType","TextBox",GMAT
+    Browser.ClickObjFind "outerHTML","<button class=""sc-dCFHLb fhikXy"">refresh</button>"
+    
+    Browser.WaitTabPage "https://ncacloudpi.ternium.com/FichaMaterial"
+    Browser.WaitObjFind "ObjectType","TextBox",30
+      
+    Delay(9876)
+    Browser.setPrincipalPage
+    Browser.ClickObjNode "ObjectType:=Button,textContent:=DISPOSITION,className:=accordion-button collapsed"
+    Browser.ClickObjNode "innerText:=REVERSE DOWNGRADE,ObjectType:=Button,Enabled:=True"
+    
+    Browser.WaitObjFind "className","sc-kAkpmW fpzPCh modal-body",40
+    Browser.setNode "className:=sc-kAkpmW fpzPCh modal-body"
+    Browser.ComboBoxObjNode "ObjectType:=Button,className:=sc-JrDLc dZiOCm","className:=sc-gmPhUn izqbun",QualityCalidad
+    
+    Delay(11876)
+    Browser.setNode "className:=sc-kAkpmW fpzPCh modal-body"
+    Browser.ClickObjNode "innerText:=SAVE,ObjectType:=Button"
+    Browser.waitObj "innerText:=SAVE,ObjectType:=Button",30
+    Delay(13789)
+    if not Browser.ExistsObjFind("outerHTML","<label class=""sc-bvgPty gOONto"">Upgrade OK</label>") Then
+      log.Error "La actualización a Primer calidad no se realizo correctamente",,,,Sys.Desktop.ActiveWindow
+    Else
+      Log.Message "Actualización a 1er calidad correctamente",,,,Sys.Desktop.ActiveWindow
+      Browser.ClickObjFind "outerHTML","<label class=""sc-bvgPty gOONto"">Upgrade OK</label>"
+    end if 
+    
+    Browser.setPrincipalPage
+    Browser.setNode "className:=sc-gFVvzn jXMhuD modal-footer"
+    Browser.ClickObjNode "innerText:=EXIT,ObjectType:=Button"
+    
+    Browser.setPrincipalPage
+    Browser.NodeTab "https://ncacloudpi.ternium.com/FichaMaterial"
+    Browser.WaitObjFind "outerHTML","<button class=""sc-dCFHLb fhikXy"">refresh</button>",30
+    Browser.FocusObjFind "outerHTML","<button class=""sc-dCFHLb fhikXy"">refresh</button>"
+    
+    Delay(4567)
+    Browser.Cerrar
+              
+  end sub
+  
+  
+  '---------------------------------------------- Retener Material ------------------------------------
+  public sub RetenerMaterial(Defect,Disposition,LineDefects,OriginLine)
+  
+    GMAT = Data.GetData("MATERIAL","") '"NEOAUTO40003" 
+    log.Message "Material a consultar:"&GMAT
+    
+    Browser.LoginNCACloud "https://ncacloudpi.ternium.com/","https://ncacloudpi.ternium.com/ReportPBI/reporte/f8a65a9d-7628-4c76-9f1f-074fe9082690"
+    Browser.WaitTabPage "https://ncacloudpi.ternium.com/ReportPBI/reporte/f8a65a9d-7628-4c76-9f1f-074fe9082690" 
+    Browser.NodeTab "https://ncacloudpi.ternium.com/ReportPBI/reporte/f8a65a9d-7628-4c76-9f1f-074fe9082690"
+    
+    Delay(9876)
+    Browser.MenuNCACLOUD "Quality","Disposition"
+    
+    Browser.NodeTab "https://ncacloudpi.ternium.com/DictaminarMaterial"
+    Browser.WaitObjFind "classname","sc-UpCWa dQEraS sc-bRlCZA hopyML __input",50
+    Delay(5678)
+    Browser.SetTextObjFind "classname","sc-UpCWa dQEraS sc-bRlCZA hopyML __input",GMAT 'ingresar material
+    
+    Browser.WaitObjFind "classname","sc-jhrdCu ikodfv right",50
+    Browser.ClickObjFind "classname","sc-jhrdCu ikodfv right" 'click en boton refresh
+    
+    Browser.waitObjFind "innerText","MASSIVE",50
+    Browser.ClickObjFind "innerText","MASSIVE"
+    
+    
+    Delay(9876)
+    Browser.SetPrincipalPage
+    Browser.setNode "classname:=sc-gInZnl jLqaGr modal-body" 
+    Browser.WaitObj "ObjectType:=Button,classname:=sc-iAEawV hpIkXa,Index:=0",30
+    Browser.ComboBoxObjNode "ObjectType:=Button,classname:=sc-iAEawV hpIkXa,Index:=4","classname:=sc-jfTVlA eDkDur",Defect
+    
+    Browser.setNode "classname:=sc-gInZnl jLqaGr modal-body"
+    Browser.WaitObj "ObjectType:=Button,classname:=sc-iAEawV hpIkXa,Index:=1",30
+    Browser.ComboBoxObjNode "ObjectType:=Button,classname:=sc-iAEawV hpIkXa,Index:=3","classname:=sc-jfTVlA eDkDur",Disposition
+    
+    Browser.setNode "classname:=sc-gInZnl jLqaGr modal-body"
+    Browser.WaitObj "ObjectType:=Button,classname:=sc-iAEawV hpIkXa,Index:=0",30
+    Browser.ComboBoxObjNode "ObjectType:=Button,classname:=sc-iAEawV hpIkXa,Index:=2","classname:=sc-jfTVlA eDkDur",LineDefects
+      
+    Browser.setNode "classname:=sc-gInZnl jLqaGr modal-body"
+    Browser.WaitObj "ObjectType:=Button,classname:=sc-iAEawV hpIkXa,Index:=0",30
+    Browser.ComboBoxObjNode "ObjectType:=Button,classname:=sc-iAEawV hpIkXa,Index:=1","classname:=sc-jfTVlA eDkDur",OriginLine
+   
+    Browser.setPrincipalPage
+    Browser.setNode "className:=sc-eJKXev iHEELA modal-footer"
+    Browser.setFocus "innerText:=SAVE,ObjectType:=Button"
+    Browser.ClickObjNode "innerText:=SAVE,ObjectType:=Button" 
+    
+    Delay(11876)
+    Browser.NodeTab "https://ncacloudpi.ternium.com/DictaminarMaterial"
+    
+    'validar si mensaje de aviso se muestra
+    if not Browser.WaitExistObjFind("className","swal2-popup swal2-modal swal2-icon-question swal2-show",50) then
+      log.Error "[Error]: Mensaje de dictamen no visualizado...",,,,Sys.Desktop.ActiveWindow
+    end if
+    
+    log.Message "Dictamen material realizado con exito",,,,Sys.Desktop.ActiveWindow
+    Browser.ClickObjFind "classname","swal2-confirm swal2-styled swal2-default-outline" 
+    
+    Delay(9876)
+    Browser.NodeTab "https://ncacloudpi.ternium.com/DictaminarMaterial"
+    Browser.setPrincipalPage
+    Browser.setNode "className:=sc-jTjUTQ jthCAw modal-body"
+    
+    Browser.ClickObjNode "ObjectIdentifier:=5,ObjectType:=Cell"
+    Resultado = Browser.getTextNode("ObjectIdentifier:=5,ObjectType:=Cell")
+    Log.Message "Resultado: "&  Resultado
+    
+    if Resultado <> "Disposition OK" then
+      Log.Error "[Error]: hubo un error al realizar el desgradado material",,,,Sys.Desktop.ActiveWindow
+    end if
+    
+    Browser.setPrincipalPage
+    Browser.setNode "className:=sc-jRwbcX jRgcMW modal-footer"
+    Browser.ClickObjNode "innerText:=EXIT,ObjectType:=Button"
+    
+    Browser.setPrincipalPage
+    Browser.setNode "classname:=sc-leZLoi QmFWZ"
+    Resultado = Browser.getTextNode("ObjectType:=Button,classname:=sc-iAEawV hpIkXa,Index:=3")
+    log.Message "Disposition: "&Resultado
+    
+    if Resultado <> Disposition then
+      Log.Error "Proceso retener material no realizado correctamente",,,,Sys.Desktop.ActiveWindow
+    end if
+    
+    Delay(9876)
+    Browser.Cerrar
+    
+      
+  end sub
+  
+  public sub AceptarMaterial(Disposition)
+  
+    GMAT = Data.GetData("MATERIAL","")  '"NEOAUTO40003"  
+    log.Message "Material a consultar:"&GMAT
+    
+    Browser.LoginNCACloud "https://ncacloudpi.ternium.com/","https://ncacloudpi.ternium.com/ReportPBI/reporte/f8a65a9d-7628-4c76-9f1f-074fe9082690"
+    Browser.WaitTabPage "https://ncacloudpi.ternium.com/ReportPBI/reporte/f8a65a9d-7628-4c76-9f1f-074fe9082690" 
+    Browser.NodeTab "https://ncacloudpi.ternium.com/ReportPBI/reporte/f8a65a9d-7628-4c76-9f1f-074fe9082690"
+    
+    Delay(9876)
+    Browser.MenuNCACLOUD "Quality","Disposition"
+    
+    Browser.NodeTab "https://ncacloudpi.ternium.com/DictaminarMaterial"
+    Browser.WaitObjFind "classname","sc-UpCWa dQEraS sc-bRlCZA hopyML __input",30
+    Delay(5678)
+    Browser.SetTextObjFind "classname","sc-UpCWa dQEraS sc-bRlCZA hopyML __input",GMAT 'ingresar material
+    
+    Browser.WaitObjFind "classname","sc-jhrdCu ikodfv right",10
+    Browser.ClickObjFind "classname","sc-jhrdCu ikodfv right" 'click en boton refresh
+    
+    'validar boton de agregar defecto
+    Browser.WaitObjFind "classname","sc-jhrdCu ikodfv right",10
+    
+    Delay(8765)
+    Browser.setPrincipalPage
+    Browser.setNode "classname:=sc-leZLoi QmFWZ"
+    Browser.WaitObj "ObjectType:=Button,classname:=sc-iAEawV hpIkXa,Index:=1",30
+    Browser.ComboBoxObjNode "ObjectType:=Button,classname:=sc-iAEawV hpIkXa,Index:=3","classname:=sc-hTBuwn eKExRe",Disposition
+    
+    Browser.NodeTab "https://ncacloudpi.ternium.com/DictaminarMaterial"
+    Browser.WaitObjFind "outerHTML","<button class=""sc-jhrdCu ikodfv"">Disposition</button>",30
+    
+     'validar si el boton DESPOSITION SE HABILITO  
+    if not Browser.ValidateEnabledObjFind("outerHTML","<button class=""sc-jhrdCu ikodfv"">Disposition</button>") Then
+      Log.Error "[Error]: el boton DISPOSITION no se encuentra habilitado",,,,Sys.Desktop.ActiveWindow
+    end if
+    
+    Delay(5678)
+    log.Message "Click en boton DISPOSITION"
+    Browser.ClickObjFind "outerHTML","<button class=""sc-jhrdCu ikodfv"">Disposition</button>"
+    
+    'classname, swal2-popup swal2-modal swal2-icon-question swal2-show
+    if not Browser.WaitExistObjFind("className", "swal2-popup swal2-modal swal2-icon-question swal2-show",30) Then
+      Log.Error "[Mensaje de PopUp no se mostro]",,,,Sys.Desktop.ActiveWindow
+    end if
+    
+    Browser.setPrincipalPage
+    Browser.setNode "classname:=swal2-popup swal2-modal swal2-icon-question swal2-show"
+    Browser.ClickObjNode "textContent:=Accept,ObjectType:=Button"
+    
+    Delay(9876)
+    Delay(9876)
+    Browser.NodeTab "https://ncacloudpi.ternium.com/DictaminarMaterial"
+    Browser.setPrincipalPage
+    Browser.setNode "className:=sc-jTjUTQ jthCAw modal-body"
+    
+    Browser.ClickObjNode "ObjectIdentifier:=5,ObjectType:=Cell"
+    Resultado = Browser.getTextNode("ObjectIdentifier:=5,ObjectType:=Cell")
+    Log.Message "Resultado: "&  Resultado
+    
+    if Resultado <> "Disposition OK" then
+      Log.Error "[Error]: hubo un error al realizar el desgradado material",,,,Sys.Desktop.ActiveWindow
+    end if
+    
+    Browser.setPrincipalPage
+    Browser.setNode "className:=sc-jRwbcX jRgcMW modal-footer"
+    Browser.ClickObjNode "innerText:=EXIT,ObjectType:=Button"
+    
+    Delay(9876)
+    Browser.NodeTab "https://ncacloudpi.ternium.com/DictaminarMaterial"
+    
+    Browser.setPrincipalPage
+    Browser.setNode "classname:=sc-leZLoi QmFWZ"
+    
+    Resultado = Browser.getTextNode("ObjectType:=Button,classname:=sc-iAEawV hpIkXa,Index:=3")
+    log.Message "Disposition: "&Resultado
+    
+    if Resultado <> Disposition then
+      log.Error "[Error]: la disposition no cambio a"&Disposition,,,,Sys.Desktop.ActiveWindow
+    end if
+    
+    log.Message "Operación Desgradar material finalizado correctamente",,,,Sys.Desktop.ActiveWindow
+    Browser.NodeTab "https://ncacloudpi.ternium.com/DictaminarMaterial"
+    Browser.setPrincipalPage
+    
+    Delay(9866)
+    Browser.Cerrar
+    
+  end sub
+  
+  
+  '----------------------------------------------- Configuraciones de Navegador -------------------------------------'
+  
+  public sub BrowerRunOptions()
+    Browsers.Item("chrome").RunOptions = "--disable-hang-monitor"  
+  end sub
+  
+  
+end class

@@ -1,0 +1,471 @@
+﻿'USEUNIT COMMON
+'USEUNIT KERNEL
+
+
+'########################'
+
+'Modificar los closeExcel y volverlos globales
+'Checar soluciones para que no quiera cerrar excels
+' que no existen.
+'########################'
+
+'Cell(1,1).CurrentRegion <- Works || UsedRange causa error.
+
+'Observaciones 
+' 1.- En la ultima fila disponible si no existe uin valor en la ultima fila disponible mandara un warning 
+'		(Se deberia de detener con el FunctionContinue = 1 But it doesnt...) 
+' 2.- Despues de usar el copyLine, los writeData con el mismo nombre de columna sobreescribiran los datos de la ultima fila seleccionada.
+Dim Data
+
+If not isobject(Data) then
+  Set Data = New Class_Data
+End if
+
+Class Class_Data
+	'Variables globales para el uso de Excel'
+	Private FilePathIn
+	Public objExcelIn
+	Public objWorkbookIn
+
+	Private FilePathOut
+	Public objExcelOut
+	Public objWorkbookOut
+
+	Public writeRow '-> Variable encargada de guardar la fila en la que se van a escribir en la ejecucion'
+	Public copyFlag '-> Boolean encargado de verificar solo 1 copia de In a Out por ejecucion'
+	Public writeFlag '-> Boolean encargado de verificar que solo se asigne una sola vez el valor a "writeRow"'
+	Public TestSetFlag 
+  
+	'Metodo que se inicializa al momento de la creacion del objeto'
+	Private Sub Class_Initialize
+		copyFlag = true
+		writeFlag = true
+		errorFlag = true
+    TestSetFlag = False
+	End Sub
+
+	Public Function getInstance
+		set getInstance = new Class_Data
+	end Function
+    
+	Public sub DataIn(strPath)
+		FilePathIn = strPath
+	End Sub 
+
+	public Sub DataOut(strPath)
+		FilePathOut = strPath
+	End Sub
+
+	'public Sub init()
+	''	copyFlag = true
+	''	writeFlag = true
+	''	errorFlag = true
+	'End Sub 
+
+	'-----------------------------'
+	'Funcion que abre el excel dado por el "FilePathIn"'
+	'Valor de retorno: Un objeto de Excel tipo WorkSheet.
+	'-----------------------------'
+  
+	Private Function openExcelIn()
+
+		Set objExcelIn = CreateObject("Excel.Application")
+		set objWorkbookIn = objExcelIn.Workbooks.Open(FilePathIn)
+		
+		objExcelIn.Application.Visible = False
+		set objWorkSheet = objWorkbookIn.WorkSheets(1)
+		objWorkSheet.Activate
+
+		set openExcelIn = objWorkSheet
+    
+	End Function
+
+
+	'-----------------------------'
+	'Funcion que abre el Excel dado por el "FilePathOut"'
+	''Valor de retorno: Un objeto de Excel tipo WorkSheet.'
+	'-----------------------------'
+	Private Function openExcelOut()
+
+		Set objExcelOut = CreateObject("Excel.Application")
+		set objWorkbookOut = objExcelOut.Workbooks.Open(FilePathOut)
+		
+		objExcelOut.Application.Visible = False
+		set objWorkSheet = objWorkbookOut.WorkSheets(1)
+		objWorkSheet.Activate
+
+		set openExcelOut = objWorkSheet
+	End Function
+
+	'-----------------------------'
+	'Sub que cierra el excel de entrada -> "FilePathIn"'
+	'-----------------------------'
+	Public sub closeExcelIn()
+		objWorkbookIn.Save
+		objWorkbookIn.Close False
+		objExcelIn.Quit
+	End sub
+
+
+	'-----------------------------'
+	'sub que cierra el excel de salida -> "FilePathOut"'
+	'-----------------------------'
+	Public sub closeExcelOut()
+		objWorkbookOut.Save
+		objWorkbookOut.Close False
+		objExcelOut.Quit
+	End sub
+
+
+	'-----------------------------'
+	'Funcion que verifica el valor "Ok" en la Columna A'
+	'Params: Un objeto Worksheet de excel'
+	'Valor de retorno: Valor numerico en donde se encuentra la fila mas proxima con un valor "Ok" '
+	'Note: La verificacion es en orden ascendente empezando por el ultimo registro [LIFO] '
+	'-----------------------------'
+	Private Function checkA(Sheet)
+	
+		'nRows = Sheet.UsedRange.Rows.Count
+		nRows = Sheet.Cells(1,1).CurrentRegion.Rows.Count
+		
+		count = nRows
+		For i=1 To nRows - 1
+			
+			If Sheet.Cells(count,1) = "disponible" or Sheet.Cells(count,1) = "Disponible" or Sheet.Cells(count,1) = "DISPONIBLE" Then
+				res = count
+				Exit for
+			else
+				count = count - 1		
+			End If
+		Next
+		checkA = res
+	End Function
+
+
+	'-----------------------------'
+	'sub que actualiza el valor de la fila en uso con el valor dado por parametro en la columna A'
+	'Params: String que contiene el valor con el que se actualizara la celda.
+	'-----------------------------'
+	'WARNING!: Validar que StrCheck sea diferente a las variaciones de "Disponible" '
+	Public sub endLine(StrCheck)
+
+		If StrCheck = "disponible" or StrCheck = "Disponible" or StrCheck = "DISPONIBLE" Then
+			log.Warning "El valor de parametro tiene que ser diferente a ['Disponible']"
+		else	 
+			set SheetIn = openExcelIn
+			workingLine = checkA(SheetIn)
+			SheetIn.Cells(workingLine,1).Value = StrCheck
+			closeExcelIn
+		End If
+		
+	End sub
+
+	'-----------------------------'
+	'Function que verifica en orden ascendente empezando por el ultimo registro la existencia de una fila
+	'	disponible en el Excel de entrada de la cual se obtendra el valor de la celda por una columna dada por parametro
+	'Params: Nombre de la columna de la cual se obtendra el valor
+	'Valor de retorno: Valor que contiene la celda'
+	'-----------------------------'
+	Public Function getData(Column,strAction)
+
+		FunctionAction = strAction
+		FunctionValue = "-"
+		FunctionOutput = "-"
+		FunctionString = "-"
+
+		Column = UCase(Column)
+
+		set Sheet = openExcelIn()
+
+		If Sheet Is Nothing Then  
+	  		objExcelIn.DisplayAlerts = False
+	  		closeExcelIn
+	  		FunctionStatus = "[Error]: No se encontro hoja de excel en la ruta especificada"
+	  		Log.Warning FunctionStatus
+	  		Exit Function
+	  	End If
+
+	  	'nColumns = Sheet.UsedRange.Columns.Count
+	  	'nRows = Sheet.UsedRange.Rows.Count
+		nColumns = Sheet.Cells(1,1).CurrentRegion.Columns.Count
+		nRows = Sheet.Cells(1,1).CurrentRegion.Rows.Count
+		
+		validRow = checkA(Sheet)
+
+		For i=1 To nColumns
+			AuxColumn = Sheet.Cells(1,i).Value
+			If AuxColumn=Column Then
+				AuxValue = Sheet.Cells(validRow,i)	
+				
+				If AuxValue = "" Then
+					FunctionStatus = "[Error] : Empty Cell in " & Column
+					Log.Warning FunctionStatus
+					Exit For
+				End If
+        
+        AuxValue = Right(AuxValue,Len(AuxValue)-1)
+        AuxValue = Left (AuxValue,Len(AuxValue)-1)
+        
+				getData = AuxValue
+        
+        FunctionOutput = AuxValue
+				FunctionStatus = "[ Exitoso ]"
+				Log.Message FunctionAction & ": " & FunctionStatus
+				Exit For
+			End If
+			
+			If i = nColumns Then
+				FunctionStatus = "[Error]: Columna no encontrada."
+				Log.Warning FunctionStatus
+				Exit For
+			End If
+		Next
+		closeExcelIn
+	End Function
+
+
+	'-----------------------------'
+	'sub que copia la ultima fila disponible de valores del excel de entrada al excel de salida
+	'Note : Si el excel de salida es nuevo copia las columnas ademas de sus valores.
+	'Important Note: 
+					'copyLine solo se usa 1 sola vez, y antes de cualquier writeData.
+					'copyLine no ejecuta si se usa despues de writeData
+	'-----------------------------'
+	Public sub CopyLine
+		if copyFlag then
+
+			set Sheet = openExcelIn()
+			set Sheet2 = openExcelOut()
+
+			If Sheet Is Nothing Then  
+		  		objExcelIn.DisplayAlerts = False
+		  		closeExcelIn
+		  		Log.Warning "[CopyLine]: Sheet Not Found: La hoja de entrada no se encontro en el Excel Especificado"
+		  		
+		  		Exit Sub
+		  	End If
+		  	If Sheet2 Is Nothing Then  
+		  		objExcelOut.DisplayAlerts = False
+		  		closeExcelOut
+		  		Log.Warning "[CopyLine]: Sheet Not Found: La hoja de salida no se encontro en el Excel Especificado"
+		
+		  		Exit Sub
+		  	End If
+
+		  	'nColumns = Sheet.UsedRange.Columns.Count
+		  	'nRows = Sheet.UsedRange.Rows.Count
+			
+			nColumns = Sheet.Cells(1,1).CurrentRegion.Columns.Count
+			nRows = Sheet.Cells(1,1).CurrentRegion.Rows.Count
+			
+		  	validRow = checkA(Sheet)
+
+		  	'De ser un nuevo Excel, copia las columnas del excel de entrada al de salida'
+		  	Bool = IsEmpty(Sheet2.Cells(1,2))
+		  	If Bool Then
+		  		For i=1 To nColumns 
+		  			AuxValue = Sheet.Cells(1,i).Value
+		  			If AuxValue = "" Then
+			  		 	closeExcelIn
+			  		 	closeExcelOut
+			  		 	Log.Warning "[Error]: Se intento copiar una Columna con valor nulo"
+			  		 	
+			  		 	Exit Sub
+			  		End If
+			  		Sheet2.Cells(1,i).Value = AuxValue 	
+		  		Next
+		  	End If
+
+		  	'nRows2 = Sheet2.UsedRange.Rows.Count
+		  	'nColumns2 = Sheet2.UsedRange.Columns.Count
+			
+			nRows2 = Sheet2.Cells(1,1).CurrentRegion.Rows.Count
+			nColumns2 = Sheet2.Cells(1,1).CurrentRegion.Columns.Count
+			
+		  	For i=1 To nColumns
+		  		AuxValue = Sheet.Cells(validRow,i).Value
+		  		If AuxValue = "" Then
+		  		 	closeExcelIn
+		  		 	closeExcelOut
+		  		 	Log.Warning "[Error]: Se intento copiar un valor nulo"
+		  		 	
+		  		 	Exit Sub
+		  		 End If 
+		  		Sheet2.Cells(nRows2+1,i).Value = AuxValue
+		  	Next
+
+		  	closeExcelIn
+		  	closeExcelOut
+
+		  	copyFlag = false
+		else
+			Log.Warning "No puedes usar el Copyline despues de writeData"
+			  	
+		End If		
+	End Sub
+	
+
+
+	'-----------------------------'
+	'sub que actualiza el ultimo valor del Excel de salida en la columna indicada.
+	' Params: 
+	'		Column: Variable con el nombre de la columna
+	'		strValue: Valor de string con el que se actualizara la celda.
+	'Important Note:
+			'Si se ejecuta el writeData con el excel de salida vacio=> 
+				'Agregara valores a la columna A apropiadamente	
+	'-----------------------------'
+	public sub writeData(Column,strAction,strValue)
+
+		FunctionAction = strAction
+		FunctionValue = """" & strValue & """" 
+		FunctionOutput = "-"
+		FunctionString = "-"
+
+		If strValue = "" Then
+			FunctionStatus = "[Error] Param: El valor a agregar es nulo."
+			Log.Warning FunctionStatus
+		
+			Exit Sub
+		End If
+
+		Column = UCase(Column)
+		set Sheet = openExcelOut()
+
+		If Sheet Is Nothing Then  
+	  		objExcelOut.DisplayAlerts = False
+	  		closeExcelOut
+	  		FunctionStatus = "[WriteData] Sheet Not Found: La hoja de salida no se encontro en el Excel Especificado"
+	  		Log.Warning FunctionStatus
+	  		Exit Sub
+	  	End If
+
+		if TestSetFlag then
+
+	  		writeRow = Sheet.Cells(1,1).CurrentRegion.Rows.Count
+	  		TestSetFlag = False
+	  		writeFlag = False
+			copyFlag = False
+
+		else
+
+			If copyFlag Then
+				Bool = IsEmpty(Sheet.Cells(1,2))
+			 	If Bool Then
+			 		Sheet.Cells(1,1).Value = "FLAG"
+			  		Sheet.Cells(2,1).Value = "Disponible"
+			  		writeRow = 2
+			  		writeFlag = False
+			  		copyFlag = False
+			 	End If
+
+			 	If writeFlag Then
+			 		'writeRow = Sheet.UsedRange.Rows.Count
+					writeRow = Sheet.Cells(1,1).CurrentRegion.Rows.Count
+		  			writeRow = writeRow + 1
+		  			Sheet.Cells(writeRow,1).Value = "Disponible"
+		  			writeFlag = False
+		  			copyFlag = False
+			 	End If
+			else
+				If writeFlag Then
+					'writeRow = Sheet.UsedRange.Rows.Count
+					writeRow = Sheet.Cells(1,1).CurrentRegion.Rows.Count
+					writeFlag = False
+					copyFlag = False
+				End If
+
+			End If
+
+	  	end if
+
+		'nColumns = Sheet.UsedRange.Columns.Count
+		nColumns = Sheet.Cells(1,1).CurrentRegion.Columns.Count
+		
+	  	For i=1 To nColumns
+	  		ColumnName = Sheet.Cells(1,i).Value
+
+	  		If ColumnName = Column Then
+	  			Sheet.Cells(writeRow,i).Value = FunctionValue
+	  			FunctionStatus = "[Exitoso]"
+	  			Log.Message FunctionAction & ": " & FunctionStatus
+	  			closeExcelOut
+	  			Exit For
+	  		End If
+
+	  		If i = nColumns Then
+	  			i = i+1
+	  			Sheet.Cells(1,i).Value = Column
+	  			Sheet.Cells(writeRow,i) = FunctionValue
+				FunctionStatus = "[Exitoso]"
+	  			Log.Message FunctionAction & ": " & FunctionStatus
+	  			closeExcelOut
+	  			Exit For
+	  		End If
+	  	Next
+	End sub
+  
+  public sub writeData_Row(Column,strValue,noRow)
+
+		FunctionAction = "Writing data in inner Excel"
+		FunctionValue = strValue
+		FunctionOutput = "-"
+		FunctionString = "-"
+
+		If strValue = "" Then
+			FunctionStatus = "[Error] Param: El valor a agregar es nulo."
+			Log.Warning FunctionStatus
+		
+			Exit Sub
+		End If
+
+		'Column = UCase(Column)
+		set Sheet = openExcelOut()
+
+		If Sheet Is Nothing Then  
+	  		objExcelOut.DisplayAlerts = False
+	  		closeExcelOut
+	  		FunctionStatus = "[WriteData] Sheet Not Found: La hoja de salida no se encontro en el Excel Especificado"
+	  		Log.Warning FunctionStatus
+	  		Exit Sub
+	  	End If
+
+		  'nColumns = Sheet.UsedRange.Columns.Count
+		  nColumns = Sheet.Cells(1,1).CurrentRegion.Columns.Count
+		  
+      if nColumns = 1 then
+        Bool = IsEmpty(Sheet.Cells(1,1))
+        if bool then
+          Sheet.Cells(1,1).Value = Column
+  	  		Sheet.Cells(noRow,1) = strValue
+          closeExcelOut
+          Exit Sub
+        end if
+      end if
+    
+	  	For i=1 To nColumns
+	  		ColumnName = Sheet.Cells(1,i).Value
+        Log.Message ColumnName
+
+	  		If ColumnName = Column Then
+	  			Sheet.Cells(noRow,i).Value = FunctionValue
+	  			FunctionStatus = "[Exitoso]"
+	  			Log.Message FunctionAction & ": " & FunctionStatus
+	  			closeExcelOut
+	  			Exit For
+	  		End If
+
+	  		If i = nColumns Then
+	  			i = i+1
+	  			Sheet.Cells(1,i).Value = Column
+	  			Sheet.Cells(noRow,i) = strValue
+				  FunctionStatus = "[Exitoso]"
+	  			Log.Message FunctionAction & ": " & FunctionStatus
+	  			closeExcelOut
+	  			Exit For
+	  		End If
+	  	Next
+	End sub
+  
+
+End Class

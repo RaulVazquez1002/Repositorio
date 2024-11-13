@@ -1,0 +1,24 @@
+﻿'USEUNIT NCA_Comp
+'USEUNIT COMMON
+'USEUNIT JSON
+'USEUNIT ESTACK
+'USEUNIT NCALITE
+
+Sub ejecucion
+
+  Data.DataIn("H:\Documents\TestComplete 14 Projects\NCALite_USA_Fase01\NCALite_USA_Fase01\Script\DataTable\NCALite.xlsx")
+  Data.DataOut("H:\Documents\TestComplete 14 Projects\NCALite_USA_Fase01\NCALite_USA_Fase01\Script\DataTable\NCALite.xlsx")
+  Data.TestSetFlag = true
+  
+  NCA.ProcessBrowser = "chrome"
+
+  NCA.RetenerMaterial "AGED MATERIAL","HOLD - QUALITY - QUALITY","MCL_SHV","CPL_SHV"
+  NCA.ConsultaMaterialNcaCloud "PRIME","Hold","6_CRS"
+
+  
+End Sub
+
+Sub xmlPath
+ set navegate = sys.Browser("chrome").Page("*")
+  
+End Sub

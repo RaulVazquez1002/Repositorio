@@ -1,0 +1,353 @@
+﻿'USEUNIT COMMON
+'USEUNIT KERNEL
+'USEUNIT NCALITE
+'USEUNIT ESTACK
+
+Dim JS
+if not isObject(JS) Then
+  set JS = new JSComp
+end if
+
+class JSComp
+
+  Dim json_ruta
+  Dim ProductoValor
+  Dim Fecha
+  Dim Material
+  Dim Observacion
+  
+  Dim Random
+  Dim Producto
+  
+  public function GetMaterial()
+  
+    Dim NameMat
+    Dim NumMat
+    Dim GMAT: GMAT = Data.GetData("MATERIAL","")
+    
+    NameMat = mid(GMAT,1,7)
+    NumMat = CLng(mid(GMAT,8,5))
+  
+    log.Message "Mat:"&NameMat
+    log.Message "Num:"&NumMat
+  
+    NumMatActual = NumMat + 1
+    MaterialActual = NameMat&NumMatActual
+    log.Message "Material actual:"&MaterialActual
+  
+    GetMaterial = MaterialActual
+    
+  end function
+  
+  
+  public function GetFecha()
+    t = now
+    Fecha = Year(t)&"-"&Right("0" & Month(t),2)&"-"&Right("0" & Day(t),2)
+    GetFecha = Fecha
+  end function
+  
+  public function GetProducto
+  
+    Random = Int((10 - 1 + 1) * Rnd + 1)
+    Producto = UTIL.UniqueString7()
+    ProductoValor = Random&Producto
+    GetProducto = ProductoValor  
+    
+  end function
+  
+  public function GetResponseCode(resultado)
+  
+     Dim Results
+     if resultado = "200" then
+        Log.Message "RESULTADO: OK",,,,Sys.Desktop.ActiveWindow
+        Results = True
+        
+      elseif resultado = "201" then
+        Log.Message "resultado:"&resultado
+        log.Message "RESULTADO: CREATED",,,,Sys.Desktop.ActiveWindow
+        Results = True
+       
+      elseif resultado = "400" then
+        Log.Message "resultado:"&resultado
+        log.Error "RESULTADO: SYNTAX ERROR",,,,Sys.Desktop.ActiveWindow
+        Results = False 
+           
+      elseif resultado = "401" then
+        Log.Message "resultado:"&resultado
+        log.Error "RESULTADO: UNAUTHORIZED",,,,Sys.Desktop.ActiveWindow
+        Results = False
+        
+      elseif resultado = "403" then
+        Log.Message "resultado:"&resultado
+        log.Error "RESULTADO:FORBIDEN",,,,Sys.Desktop.ActiveWindow
+        Results = False
+        
+      elseif resultado = "404" then
+        Log.Message "resultado:"&resultado
+        log.Error "RESULTADO:NOT FOUND",,,,Sys.Desktop.ActiveWindow
+        Results = False
+                
+      elseif resultado = "500" then
+        Log.Message "resultado:"&resultado
+        log.Error "RESULTADO: INTERNAL SERVER ERROR",,,,Sys.Desktop.ActiveWindow
+        Results = False
+        
+      end if
+          
+    GetResponseCode = Results
+    
+  end function
+  
+  public function AltaMaterial()
+      
+    json_ruta = "{"&_
+          """data"""&":"& "[["&_
+          "{"&_
+          """atributosVariables"""&":"&" [["&_
+          "{"&_
+          """unidadMedida"""&":"&""""""&","&_
+          """valor"""&":"& """M-P-FRIO-BOB-CRU"""&","&_
+          """nombreValor"""&":"& "null"&","&_
+          """variable"""&":"& """CLASE_PRODUCTO"""&_
+          "}"&","&_
+          "{"&_
+          """unidadMedida"""&":"&""""""&","&_
+          """valor"""&":"& """MP516806"""&","&_
+          """nombreValor"""&":"& "null"&","&_
+          """variable"""&":"& """PRODUCTO"""&_
+          "}"&","&_
+          "{"&_
+          """unidadMedida"""&":"& """"""&","&_
+          """valor"""&":"& """ER69"""&","&_
+          """nombreValor"""&":"& """NOMINAL"""&","&_
+          """variable"""&":"& """EMBALAJE"""&_
+          "}"&","&_
+          "{"&_
+          """unidadMedida"""&":"& """IN"""&","&_
+          """valor"""&":"& """0.0128"""&","&_
+          """nombreValor"""&":"& """NOMINAL"""&","&_
+          """variable"""&":"& """ESPESOR"""&_
+          "}"&","&_
+          "{"&_
+          """unidadMedida"""&":"&"""IN"""&","&_
+          """valor"""&":"& """0.0128"""&","&_
+          """nombreValor"""&":"& """REAL"""&","&_
+          """variable"""&":"& """ESPESOR"""&_
+          "}"&","&_
+          "{"&_
+          """unidadMedida"""&":"& """"""&","&_
+          """valor"""&":"& """PRS"""&","&_
+          """nombreValor"""&":"&"null"&","&_
+          """variable"""&":"& """USO_FINAL"""&_
+          "}"&","&_
+          "{"&_
+          """unidadMedida"""&":"& """IN"""&","&_
+          """valor"""&":"& """40.8750"""&","&_
+          """nombreValor"""&":"& """NOMINAL"""&","&_
+          """variable"""&":"& """ANCHO"""&_
+          "}"&","&_
+          "{"&_
+          """unidadMedida"""&":"& """IN"""&","&_
+          """valor"""&":"& """40.8750"""&","&_
+          """nombreValor"""&":"& """REAL"""&","&_
+          """variable"""&":"& """ANCHO"""&_
+          "}"&","&_
+          "{"&_
+          """unidadMedida"""&":"& """"""&","&_
+          """valor"""&":"& """0/6"""&","&_
+          """nombreValor"""&":"& "null"&","&_
+          """variable"""&":"& """RANGO_PESO"""&_
+          "}"&","&_
+          "{"&_
+          """unidadMedida"""&":"& """"""&","&_
+          """valor"""&":"& """NOM, DESPUES DE RECUBRIMIENTO"""&","&_
+          """nombreValor"""&":"& "null"&","&_
+          """variable"""&":"& """TIPO_ESPESOR"""&_
+          "}"&","&_
+          "{"&_
+          """unidadMedida"""&":"& """MM"""&","&_
+          """valor"""&":"& """6967728.0000"""&","&_
+          """nombreValor"""&":"& """REAL"""&","&_
+          """variable"""&":"& """LARGO"""&_
+          "}"&","&_
+          "{"&_
+          """unidadMedida"""&":"& """"""&","&_
+          """valor"""&":"& """CA"""&","&_
+          """nombreValor"""&":"& "null"&","&_
+          """variable"""&":"& """PAIS_COLADA"""&_
+          "}"&","&_
+          "{"&_
+          """unidadMedida"""&":"& """"""&","&_
+          """valor"""&":"& """859664"""&","&_
+          """nombreValor"""&":"& "null"&","&_
+          """variable"""&":"& """IdColada"""&_
+          "}"&","&_
+          "{"&_
+          """unidadMedida"""&":"& """"""&","&_
+          """valor"""&":"&""""&GetProducto()&""""&","&_ 
+          """nombreValor"""&":"& "null"&","&_
+          """variable"""&":" &"""MATERIAL_PROVEEDOR"""&_
+          "}"&","&_ 
+          "{"&_ 
+          """unidadMedida"""&":"& """"""&","&_ 
+          """valor"""&":"& """TER\\6HYLGAFHALSHV (V 2006 REV 1)"""&","&_ 
+          """nombreValor"""&":"& "null"&","&_ 
+          """variable"""&":"& """GRADO"""&_ 
+          "}"&_ 
+          "]"&","&_ 
+          """calidad"""&":"& """1RA"""&","&_ 
+          """clave"""&":"& """SUPPLYCHAIN"""&","&_ 
+          """estrategia"""&":"& """STS"""&","&_ 
+          """fechaAlta"""&":"& """"&GetFecha()&"T00:00:00.000Z"""&","&_ 
+          """fechaProduccion"""&":"& """"&GetFecha()&"T00:00:00.000Z"""&","&_ 
+          """grado"""&":"& """TER\\6HYLGAFHALSHV (V 2006 REV 1)"""&","&_ 
+          """idBulto"""&":"& """"&GetMaterial()&""""&","&_ 
+          """idProveedor"""&":"& """30032023"""&","&_ 
+          """nombreProveedor"""&":"& """STELCO INC"""&","&_ 
+          """observacion"""&":"& """PRUEBASTESSAUTO"""&","&_ 
+          """ordenCompra"""&":"& """0"""&","&_ 
+          """pesoNeto"""&":"& """20000"""&","&_ 
+          """producto"""&":"& """MP516806"""&","&_ 
+          """propiedadesMecanicas"""&":"& "[["&_ 
+          "{"&_ 
+          """variable"""&":"& """%E"""&","&_ 
+          """valor"""&":"& """0"""&","&_ 
+          """unidadMedida"""&":"& """"""&_ 
+          "}"&","&_ 
+          "{"&_ 
+          """variable"""&":"& """RT_KSI"""&","&_ 
+          """valor"""&":"& """0"""&","&_ 
+          """unidadMedida"""&":"& """"""&_ 
+          "}"&","&_ 
+          "{"&_ 
+          """variable"""&":"& """LE_KSI"""&","&_ 
+          """valor"""&":"& """0"""&","&_ 
+          """unidadMedida"""&":"& """"""&_ 
+          "}"&","&_ 
+          "{"&_ 
+          """variable"""&":"& """DUREZA"""&","&_ 
+          """valor"""&":"& """0"""&","&_ 
+          """unidadMedida"""&":"& """"""&_ 
+          "}"&","&_ 
+          "{"&_ 
+          """variable"""&":"& """RHRDD"""&","&_ 
+          """valor"""&":"& """0"""&","&_ 
+          """unidadMedida"""&":"& """"""&_ 
+          "}"&","&_ 
+          "{"&_ 
+          """variable"""&":"& """RHRDC"""&","&_ 
+          """valor"""&":"& """0"""&","&_ 
+          """unidadMedida"""&":"& """"""&_ 
+          "}"&","&_ 
+          "{"&_ 
+          """variable"""&":"& """RHRDO"""&","&_ 
+          """valor"""&":"& """0"""&","&_ 
+          """unidadMedida"""&":"& """"""&_ 
+          "}"&","&_ 
+          "{"&_ 
+          """variable"""&":"& """CAPA_MET"""&","&_ 
+          """valor"""&":"& """0"""&","&_ 
+          """unidadMedida"""&":"& """"""&_ 
+          "}"&","&_ 
+          "{"&_ 
+          """variable"""&":"& """MCWDTM"""&","&_ 
+          """valor"""&":"& """0"""&","&_ 
+          """unidadMedida"""&":"& """"""&_ 
+          "}"&","&_ 
+          "{"&_ 
+          """variable"""&":"& """MCWCTM"""&","&_ 
+          """valor"""&":"& """0"""&","&_ 
+          """unidadMedida"""&":"& """"""&_ 
+          "}"&","&_ 
+          "{"&_ 
+          """variable"""&":"& """MCWOTM"""&","&_ 
+          """valor"""&":"& """0"""&","&_ 
+          """unidadMedida"""&":"& """"""&_ 
+          "}"&_ 
+          "]"&","&_ 
+          """quimica"""&":"& "[["&_ 
+          "{"&_ 
+          """componente"""&":"& """CR"""&","&_ 
+          """valor"""&":"& """0.053"""&_ 
+          "}"&","&_ 
+          "{"&_ 
+          """componente"""&":"& """C"""&","&_ 
+          """valor"""&":"& """0.05"""&_ 
+          "}"&","&_ 
+          "{"&_ 
+          """componente"""&":"& """MO"""&","&_ 
+          """valor"""&":"& """0.011"""&_ 
+          "}"&","&_ 
+          "{"&_ 
+          """componente"""&":"& """B"""&","&_ 
+          """valor"""&":"& """0"""&_ 
+          "}"&","&_ 
+          "{"&_ 
+          """componente"""&":"& """P"""&","&_ 
+          """valor"""&":"& """0.008"""&_ 
+          "}"&","&_ 
+          "{"&_ 
+          """componente"""&":"& """TI"""&","&_ 
+          """valor"""&":"& """0.002"""&_ 
+          "}"&","&_ 
+          "{"&_ 
+          """componente"""&":"& """N"""&","&_ 
+          """valor"""&":"& """0.003"""&_ 
+          "}"&","&_ 
+          "{"&_ 
+          """componente"""&":"& """CU"""&","&_ 
+          """valor"""&":"& """0.064"""&_ 
+          "}"&","&_ 
+          "{"&_ 
+          """componente"""&":"& """AL"""&","&_ 
+          """valor"""&":"& """0.035"""&_ 
+          "}"&","&_ 
+          "{"&_ 
+          """componente"""&":"& """V"""&","&_ 
+          """valor"""&":"& """0.002"""&_ 
+          "}"&","&_ 
+          "{"&_ 
+          """componente"""&":"& """CB"""&","&_ 
+          """valor"""&":"& """0.002"""&_ 
+          "}"&","&_ 
+          "{"&_ 
+          """componente"""&":"& """NI"""&","&_ 
+          """valor"""&":"& """0.026"""&_ 
+          "}"&","&_ 
+          "{"&_ 
+          """componente"""&":"& """MN"""&","&_ 
+          """valor"""&":"& """0.25"""&_ 
+          "}"&","&_ 
+          "{"&_ 
+          """componente"""&":"& """S"""&","&_ 
+          """valor"""&":"& """0.011"""&_ 
+          "}"&","&_ 
+          "{"&_ 
+          """componente"""&":"& """SI"""&","&_ 
+          """valor"""&":"& """0.008"""&_ 
+          "}"&","&_ 
+          "{"&_ 
+          """componente"""&":"& """SN"""&","&_ 
+          """valor"""&":"& """0.004"""&_ 
+          "}"&_ 
+          "]"&","&_ 
+          """sociedad"""&":"& """TI01"""&","&_ 
+          """tipoBulto"""&":"& """BOBINA"""&","&_ 
+          """unidadMedidaPeso"""&":"& """LB"""&_ 
+          "}"&_ 
+          "]"&_ 
+          "}"
+    
+    AltaMaterial = json_ruta
+    
+  end function
+  
+  public sub SaveMaterial()
+  
+    Delay(9876)
+    Log.Message "Guardando Material...."
+    Data.WriteData "MATERIAL","",GetMaterial()
+    
+  end sub
+  
+end class 

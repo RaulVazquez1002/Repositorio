@@ -1,0 +1,380 @@
+﻿
+Set TEDDI = New Class_DataDictionary
+
+Class Class_DataDictionary
+	Private strFileName
+	Private dReservedParams
+	Private dCustom
+	
+	'///// GET CLASS ROUTINES /////
+Public Property Get GlobalTimeOut
+	GlobalTimeOut = dReservedParams.Item("GlobalTimeOut")
+End Property
+
+Public Property Get ObjectHighLight
+	ObjectHighLight = dReservedParams.Item("ObjectHighLight")
+End Property
+
+Public Property Get PrintLog
+	PrintLog = dReservedParams.Item("PrintLog")
+End Property
+
+Public Property Get ErrorPopUp
+	ErrorPopUp = dReservedParams.Item("ErrorPopUp")
+End Property
+
+Public Property Get DebugMODE
+	DebugMODE = dReservedParams.Item("DebugMODE")
+End Property
+
+Public Property Get errNumber
+	errNumber = dReservedParams.Item("errNumber")
+End Property
+
+Public Property Get errDescription
+	errDescription = dReservedParams.Item("errDescription")
+End Property
+
+Public Property Get TestName
+	TestName = dReservedParams.Item("TestName")
+End Property
+
+Public Property Get TestBranch
+	TestBranch = dReservedParams.Item("TestBranch")
+End Property
+
+Public Property Get TestScenario
+	TestScenario = dReservedParams.Item("TestScenario")
+End Property
+
+Public Property Get DataSheetPath
+	DataSheetPath = dReservedParams.Item("DataSheetPath")
+End Property
+
+Public Property Get DataSheetFilename
+	DataSheetFilename = dReservedParams.Item("DataSheetFilename")
+End Property
+
+Public Property Get TestIterations
+	TestIterations = dReservedParams.Item("TestIterations")
+End Property
+
+Public Property Get TestIterationCounter
+	TestIterationCounter = dReservedParams.Item("TestIterationCounter")
+End Property
+
+Public Property Get FunctionAction
+	FunctionAction = dReservedParams.Item("FunctionAction")
+End Property
+
+Public Property Get FunctionValue
+	FunctionValue = dReservedParams.Item("FunctionValue")
+End Property
+
+Public Property Get FunctionOutput
+	FunctionOutput = dReservedParams.Item("FunctionOutput")
+End Property
+
+Public Property Get FunctionName
+	FunctionName = dReservedParams.Item("FunctionName")
+End Property
+
+Public Property Get FunctionStepNumber
+	FunctionStepNumber = dReservedParams.Item("FunctionStepNumber")
+End Property
+
+Public Property Get FunctionStepCaptureScreen
+	FunctionStepCaptureScreen = dReservedParams.Item("FunctionStepCaptureScreen")
+End Property
+
+Public Property Get FunctionTimeStart
+	FunctionTimeStart = dReservedParams.Item("FunctionTimeStart")
+End Property
+
+Public Property Get FunctionTimeEnd
+	FunctionTimeEnd = dReservedParams.Item("FunctionTimeEnd")
+End Property
+
+Public Property Get FunctionStatus
+	FunctionStatus = dReservedParams.Item("FunctionStatus")
+End Property
+
+Public Property Get FunctionTimeOverall
+	FunctionTimeOverall = dReservedParams.Item("FunctionTimeOverall")
+End Property
+
+Public Property Get FunctionActiveWindow
+	FunctionWnd = dReservedParams.Item("FunctionWnd")
+End Property
+
+Public Property Get TestContinueOnError
+	TestContinueOnError = dReservedParams.Item("TestContinueOnError")
+End Property
+
+Public Property Get TestTimeStart
+	TestTimeStart = dReservedParams.Item("TestTimeStart")
+End Property
+
+Public Property Get TestArea
+	TestArea = dReservedParams.Item("TestArea")
+End Property
+
+Public Property Get TestSet
+	TestSet = dReservedParams.Item("TestSet")
+End Property
+
+Public Property Get TestLabFolder
+	TestLabFolder = dReservedParams.Item("TestLabFolder")
+End Property
+
+Public Property Get TestPartsOfTestSet
+	TestPartsOfTestSet = dReservedParams.Item("TestPartsOfTestSet")
+End Property
+
+Public Property Get TestSUTName
+	TestSUTName = dReservedParams.Item("TestSUTName")
+End Property
+
+Public Property Get TestDataFilePath
+	TestDataFilePath = dReservedParams.Item("SetLibrariesExternalPath")
+End Property
+
+Public Property Get TestReportFilePath
+	TestReportFilePath = dReservedParams.Item("TestReportPath")
+End Property
+
+Public Property Get GetValue(strKey)
+
+	If dReservedParams.Exists(strKey) Then
+		GetValue = dReservedParams.Item(strKey)
+	Else
+		If dCustom.Exists(strKey) Then
+			GetValue = dCustom.Item(strKey)
+		Else
+			GetValue = ""
+			Err.Description = "[  WARNING  ] The Variable You Look For Doesn't Exist: " & strKey &". Blank Value was Set."
+			Log.Error Err.Description
+		End If
+	End If
+		
+End Property
+	
+Public Property Let GlobalTimeOut(intSeconds)
+	dReservedParams.Item("GlobalTimeOut") = intSeconds
+End Property
+
+Public Property Let ObjectHighLight(boolState)
+	If boolState <> TRUE and boolState <> FALSE Then
+		boolState = FALSE
+	End If
+	dReservedParams.Item("ObjectHighLight") = boolState
+End Property
+
+Public Property Let AddValue(strKey,strValue)
+
+	If dReservedParams.Exists(strKey) Then
+		dReservedParams.Item(strKey) = strValue
+	Else
+		If dCustom.Exists(strKey) Then
+			dCustom.Item(strKey) = strValue
+		Else
+			dCustom.Add strKey,strValue
+		End If
+	End If
+		
+End Property
+
+Public Property Let PrintLog(boolState)
+	dReservedParams.Item("PrintLog") = boolState
+End Property
+
+Public Property Let ErrorPopUp(boolState)
+	dReservedParams.Item("ErrorPopUp") = boolState
+End Property
+
+Public Property Let DebugMODE(boolState)
+	dReservedParams.Item("DebugMODE") = boolState
+End Property
+
+Public Property Let errNumber(intNumber)
+	dReservedParams.Item("errNumber") = intNumber
+End Property
+
+Public Property Let errDescription(strText)
+	dReservedParams.Item("errDescription") = strText
+End Property
+
+Public Property Let TestName(strText)
+	dReservedParams.Item("TestName") = strText
+End Property
+
+Public Property Let TestBranch(strText)
+	dReservedParams.Item("TestBranch") = strText
+End Property
+
+Public Property Let TestScenario(strText)
+	dReservedParams.Item("TestScenario") = strText
+End Property
+
+Public Property Let DataSheetPath(strText)
+	dReservedParams.Item("DataSheetPath") = strText
+End Property
+
+Public Property Let DataSheetFilename(strText)
+	dReservedParams.Item("DataSheetFileName") = strText
+End Property
+
+Public Property Let TestIterations(intNumber)
+	dReservedParams.Item("TestIterations") = intNumber
+End Property
+
+Public Property Let TestIterationCounter(intNumber)
+	dReservedParams.Item("TestIterationCounter") = intNumber
+End Property
+
+Public Property Let FunctionAction(strText)
+	dReservedParams.Item("FunctionAction") = strText
+End Property
+
+Public Property Let FunctionValue(strText)
+	dReservedParams.Item("FunctionValue") = strText
+End Property
+
+Public Property Let FunctionOutput(strText)
+	dReservedParams.Item("FunctionOutput") = strText
+End Property
+
+Public Property Let FunctionName(strText)
+	dReservedParams.Item("FunctionName") = strText
+End Property
+
+Public Property Let FunctionStepNumber(intNumber)
+	dReservedParams.Item("FunctionStepNumber") = intNumber
+End Property
+
+Public Property Let FunctionStepCaptureScreen(boolText)
+	dReservedParams.Item("FunctionStepCaptureScreen") = boolText
+End Property
+
+Public Property Let FunctionTimeStart(intNumber)
+	dReservedParams.Item("FunctionTimeStart") = intNumber
+End Property
+
+Public Property Let FunctionTimeEnd(intNumber)
+	dReservedParams.Item("FunctionTimeEnd") = intNumber
+End Property
+
+Public Property Let FunctionStatus(strText)
+	dReservedParams.Item("FunctionStatus") = strText
+End Property
+
+Public Property Let FunctionTimeOverall(strText)
+	dReservedParams.Item("FunctionTimeOverall") = strText
+End Property
+
+Public Property Let FunctionWnd(strText)
+	dReservedParams.Item("FunctionWnd") = strText
+End Property
+
+Public Property Let TestContinueOnError(strText)
+	dReservedParams.Item("TestContinueOnError") = strText
+End Property
+
+Public Property Let TestReportFilePath(strText)
+	dReservedParams.Item("TestReportPath") = strText
+End Property
+
+Private Sub Class_Initialize()
+
+	Set dCustom = CreateObject("Scripting.Dictionary")
+	Set dReservedParams = CreateObject("Scripting.Dictionary")	
+	
+	SetDateValues()
+	SetTimeValues()
+	
+	dReservedParams.Add "GlobalTimeOut", 300
+	dReservedParams.Add "ObjectHighLight", TRUE
+	dReservedParams.Add "PrintLog", TRUE
+	dReservedParams.Add "ErrorPopUp", TRUE
+	dReservedParams.Add "TestName", EMPTY
+	dReservedParams.Add "TestBranch", ""
+	dReservedParams.Add "TestScenario", ""
+	dReservedParams.Add "TestIterationCounter", 0
+	dReservedParams.Add "TestContinueOnError", FALSE
+	dReservedParams.Add "TestTimeStart", NOW
+	dReservedParams.Add "errNumber", 0
+	dReservedParams.Add "errDescription", EMPTY
+	dReservedParams.Add "DebugMODE", TRUE
+	dReservedParams.Add "TestArea", EMPTY
+	dReservedParams.Add "TestSet", EMPTY
+	dReservedParams.Add "TestLabFolder", EMPTY
+	dReservedParams.Add "TestPartsOfTestSet", EMPTY
+	dReservedParams.Add "TestSUTName", EMPTY
+	dReservedParams.Add "TestFrameworkPath", EMPTY
+	dReservedParams.Add "TestReportPath", EMPTY
+	dReservedParams.Add "FunctionStepNumber", "0"
+	dReservedParams.Add "FunctionStepCaptureScreen", EMPTY
+	dReservedParams.Add "FunctionOutput", "-"
+	
+	
+End Sub
+
+Public Function RemoveValue(strKey)
+
+	If dReservedParams.Exists(strKey) Then
+		Log.Error strKey&": RESERVED VALUE IS NOT ALLOWED TO BE DELETED"
+	Else
+		If dCustom.Exists(strKey) Then
+			dCustom.Remove(strKey)
+		Else
+			Log.Error strKey&": NO VALUE WAS FOUND ON RESERVED AND CUSTOM RECORDS"
+		End If
+	End If
+
+End Function
+
+Private Sub SetDateValues()
+	
+	TheDate=NOW
+	TheString="0"
+	If YEAR(TheDate)<10 Then
+		dReservedParams.Add "YEAR", TheString&YEAR(TheDate)
+	Else
+		dReservedParams.Add "YEAR", YEAR(TheDate)
+	End If
+	If MONTH(TheDate)<10 Then
+		dReservedParams.Add "MONTH", TheString&MONTH(TheDate)
+	Else
+		dReservedParams.Add "MONTH", MONTH(TheDate)
+	End If
+	If DAY(TheDate)<10 Then
+		dReservedParams.Add "DAY", "0"&DAY(TheDate)
+	Else
+		dReservedParams.Add "DAY", DAY(TheDate)
+	End If
+	
+End Sub
+
+Private Sub SetTimeValues()
+	
+	TheTime=Now
+	TheString="0"
+	If HOUR(TheTime)<10 Then
+		dReservedParams.Add "HOUR", TheString&HOUR(TheTime)
+	Else
+		dReservedParams.Add "HOUR", HOUR(TheTime)
+	End If
+	If MINUTE(TheTime)<10 Then
+		dReservedParams.Add "MINUTE", TheString&MINUTE(TheTime)
+	Else
+		dReservedParams.Add "MINUTE", MINUTE(TheTime)
+	End If
+	If SECOND(TheTime)<10 Then
+		dReservedParams.Add "SECOND", TheString&SECOND(TheTime)
+	Else
+		dReservedParams.Add "SECOND", SECOND(TheTime)
+	End If
+	
+End Sub
+
+End Class

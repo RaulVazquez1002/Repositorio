@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Root signature="{24B6FA0B-0143-461A-9758-AEB9E9A9428B}" version="14.0" key="{771324CC-DDFD-4F88-B045-D916E84F0C2E}">
+	<children>
+		<child name="NCALite_USA_Fase01" key="{CC86330E-FF84-4DCB-A7A4-97D8B2C52D1F}" path="NCALite_USA_Fase01\NCALite_USA_Fase01.mds" />
+	</children>
+	<testItems key="{8840DC27-9ED6-404A-BF23-A956290511E9}">
+		<children>
+			<testItem key="{CC86330E-FF84-4DCB-A7A4-97D8B2C52D1F}" enabled="True" timeout="0" stopOnError="True" description="" />
+		</children>
+	</testItems>
+	<variables key="{FBB54147-3702-4512-A7CC-36A12412294F}">
+		<data Version="3" />
+	</variables>
+	<analysis key="{B300832F-0D21-4070-8955-0C56022C3A19}" />
+	<scc key="{00000000-0000-0000-0000-000000000000}" name="">
+		<data />
+	</scc>
+	<extender key="{1A3FC97E-9A66-4716-B166-35D10B4146E0}">
+		<CrossBrowserTesting Enable="True" />
+	</extender>
+</Root>
