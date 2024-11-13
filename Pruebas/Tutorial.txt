@@ -1,9 +1,10 @@
 #Tutorial c++
---------------------------------------------------------------------------
-int main(){
-int Num;
-cin>>num;
-if(num<0){
-}
-return 0;
+#tutorial java
+#
+#
+#
+#
+#
+int i = 100;
+for(int x=0;x<i;x++){
 }
