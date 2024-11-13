@@ -1,4 +1,0 @@
-json_ruta = "{"&vbCr&_
-"""data"""&":"& "[["&vbCr&_
-"""data"""&":"& "[["&vbCr&_          line1
-line2
